@@ -5,8 +5,8 @@
   <requires lib="libhandy" version="0.0"/>
   <template class="SpotipyneWindow" parent="GtkApplicationWindow">
     <property name="can_focus">False</property>
-    <property name="default_width">720</property>
-    <property name="default_height">1440</property>
+    <property name="default_width">1000</property>
+    <property name="default_height">600</property>
     <child>
       <object class="GtkBox" id="MainBox">
         <property name="visible">True</property>
@@ -195,7 +195,7 @@
                 <property name="name">title_label</property>
                 <property name="visible">True</property>
                 <property name="can_focus">False</property>
-                <property name="label">Organizer</property>
+                <property name="label">Spotipyne</property>
                 <attributes>
                   <attribute name="weight" value="bold"/>
                 </attributes>
