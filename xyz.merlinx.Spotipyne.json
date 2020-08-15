@@ -23,6 +23,7 @@
     ],
     "modules" : [
         "python3-spotipy.json"
+        "python3-xdg.json"
         {
             "name" : "libhandy",
             "buildsystem" : "meson",
