@@ -11,19 +11,17 @@
       <object class="GtkBox" id="MainBox">
         <property name="visible">True</property>
         <property name="can_focus">False</property>
+        <property name="vexpand">True</property>
         <property name="orientation">vertical</property>
         <child>
           <object class="GtkStack" id="MainStack">
             <property name="visible">True</property>
             <property name="can_focus">False</property>
-            <property name="margin_bottom">349</property>
-            <property name="vexpand">True</property>
             <property name="transition_type">slide-left-right</property>
             <child>
-              <object class="GtkLabel">
+              <object class="GtkListBox" id="PlaylistsList">
                 <property name="visible">True</property>
                 <property name="can_focus">False</property>
-                <property name="label" translatable="yes">Lul</property>
               </object>
               <packing>
                 <property name="name">page0</property>
@@ -31,24 +29,41 @@
               </packing>
             </child>
             <child>
-              <placeholder/>
+              <object class="GtkLabel">
+                <property name="visible">True</property>
+                <property name="can_focus">False</property>
+                <property name="label" translatable="yes">label</property>
+              </object>
+              <packing>
+                <property name="name">page1</property>
+                <property name="title" translatable="yes">page1</property>
+                <property name="position">1</property>
+              </packing>
             </child>
             <child>
-              <placeholder/>
+              <object class="GtkLabel">
+                <property name="visible">True</property>
+                <property name="can_focus">False</property>
+                <property name="label" translatable="yes">label</property>
+              </object>
+              <packing>
+                <property name="name">page2</property>
+                <property name="title" translatable="yes">page2</property>
+                <property name="position">2</property>
+              </packing>
             </child>
           </object>
           <packing>
-            <property name="expand">False</property>
+            <property name="expand">True</property>
             <property name="fill">True</property>
             <property name="position">0</property>
           </packing>
         </child>
         <child>
-          <object class="HdyViewSwitcherBar" id="FooterSwitcher">
+          <object class="HdyViewSwitcherBar" id="bottom_switcher">
             <property name="visible">True</property>
             <property name="can_focus">False</property>
             <property name="stack">MainStack</property>
-            <property name="reveal">True</property>
           </object>
           <packing>
             <property name="expand">False</property>
@@ -59,15 +74,34 @@
       </object>
     </child>
     <child type="titlebar">
-      <object class="HdyHeaderBar">
+      <object class="HdyHeaderBar" id="headerbar">
         <property name="visible">True</property>
         <property name="can_focus">False</property>
         <property name="show_close_button">True</property>
-        <child>
-          <object class="GtkStackSwitcher">
+        <property name="centering_policy">strict</property>
+        <child type="title">
+          <object class="HdySqueezer" id="squeezer">
             <property name="visible">True</property>
             <property name="can_focus">False</property>
-            <property name="stack">MainStack</property>
+            <property name="homogeneous">True</property>
+            <child>
+              <object class="HdyViewSwitcher" id="headerbar_switcher">
+                <property name="visible">True</property>
+                <property name="can_focus">False</property>
+                <property name="stack">MainStack</property>
+              </object>
+            </child>
+            <child>
+              <object class="GtkLabel">
+                <property name="name">title_label</property>
+                <property name="visible">True</property>
+                <property name="can_focus">False</property>
+                <property name="label">Organizer</property>
+                <attributes>
+                  <attribute name="weight" value="bold"/>
+                </attributes>
+              </object>
+            </child>
           </object>
         </child>
       </object>

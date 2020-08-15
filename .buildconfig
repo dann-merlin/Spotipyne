@@ -1,0 +1,16 @@
+[default]
+name=Default
+runtime=host
+toolchain=default
+config-opts=
+run-opts=
+prefix=/home/merlin/.cache/gnome-builder/install/Spotipyne/host
+app-id=
+postbuild=
+prebuild=
+default=true
+
+[default.environment]
+PKG_CONFIG_PATH=/usr/local/lib/pkgconfig
+GI_TYPELIB_PATH=/usr/local/lib/girepository-1.0:$GI_TYPELIB_PATH
+LD_LIBRARY_PATH=/usr/local/lib

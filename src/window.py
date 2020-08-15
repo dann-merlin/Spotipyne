@@ -15,14 +15,33 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+import gi
+gi.require_version('Handy', '1')
 from gi.repository import Gtk, Handy
+
+from .spotifyGuiBuilder import SpotifyGuiBuilder
 
 
 @Gtk.Template(resource_path='/xyz/merlinx/Spotipyne/window.ui')
 class SpotipyneWindow(Gtk.ApplicationWindow):
-    __gtype_name__ = 'SpotipyneWindow'
+	__gtype_name__ = 'SpotipyneWindow'
 
-    Handy.Column()
+	Handy.init()
+	squeezer = Gtk.Template.Child()
+	headerbar_switcher = Gtk.Template.Child()
+	bottom_switcher = Gtk.Template.Child()
+	MainStack = Gtk.Template.Child()
+	PlaylistsList = Gtk.Template.Child()
 
-    def __init__(self, **kwargs):
-        super().__init__(**kwargs)
+	def on_headerbar_squeezer_notify(self, squeezer, event):
+		child = squeezer.get_visible_child()
+		self.bottom_switcher.set_reveal(child != self.headerbar_switcher)
+
+	def __init__(self, **kwargs):
+		super().__init__(**kwargs)
+		self.squeezer.connect("notify::visible-child", self.on_headerbar_squeezer_notify)
+		self.spGUI = SpotifyGuiBuilder()
+		self.spGUI.setPlaylistEntries(self.PlaylistsList)
+		self.PlaylistsList.show_all()
+
+
