@@ -31,6 +31,7 @@ spotipyne_sources = [
   'window.py',
   'spotifyGuiBuilder.py',
   'coverArtLoader.py',
+  'config.py',
 ]
 
 install_data(spotipyne_sources, install_dir: moduledir)

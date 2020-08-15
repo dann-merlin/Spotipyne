@@ -1,7 +1,5 @@
 import os
 
-import requests
-
 import spotipy
 from spotipy.oauth2 import SpotifyOAuth
 
@@ -27,6 +25,8 @@ class SpotifyGuiBuilder:
 
 		self.sp = spotipy.Spotify(auth_manager=sp_oauth)
 
+		self.coverArtLoader = CoverArtLoader()
+
 	def setPlaylistEntries(self, PlaylistsList):
 		results = self.sp.current_user_playlists(limit=50)
 		if len(results['items']) == 0:
@@ -40,12 +40,12 @@ class SpotifyGuiBuilder:
 		for item in results['items']:
 			row = Gtk.ListBoxRow()
 			hbox = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL)
-			imageUrl = None
-			coverArt = CoverArtLoader.load_playlist_cover(item['id'])
+			imageUrl = item['images'][0]['url']
+			coverArt = self.coverArtLoader.loadPlaylistCover(url=imageUrl, playlistID=item['id'])
 			if coverArt:
-				hbox.pack_start(coverArt, True, True, 0)
+				hbox.pack_start(coverArt, False, True, 0)
 
 			label = Gtk.Label(item['name'], xalign=0)
 			hbox.pack_end(label, True, True, 0)
-			row.add(box)
+			row.add(hbox)
 			PlaylistsList.add(row)

@@ -23,11 +23,12 @@ gi.require_version('Gtk', '3.0')
 from gi.repository import Gtk, Gio
 
 from .window import SpotipyneWindow
+from .config import Config
 
 
 class Application(Gtk.Application):
     def __init__(self):
-        super().__init__(application_id='xyz.merlinx.Spotipyne',
+        super().__init__(application_id=Config.applicationID,
                          flags=Gio.ApplicationFlags.FLAGS_NONE)
 
     def do_activate(self):
