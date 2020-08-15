@@ -22,15 +22,18 @@
               <object class="HdyLeaflet" id="PlaylistsOverview">
                 <property name="visible">True</property>
                 <property name="can_focus">False</property>
+                <property name="can_swipe_back">True</property>
                 <child>
                   <object class="GtkBox" id="Playlists">
                     <property name="visible">True</property>
                     <property name="can_focus">False</property>
+                    <property name="hexpand">False</property>
                     <property name="orientation">vertical</property>
                     <child>
                       <object class="GtkLabel" id="PlaylistsListTitle">
                         <property name="visible">True</property>
                         <property name="can_focus">False</property>
+                        <property name="hexpand">True</property>
                         <property name="label" translatable="yes">Playlists</property>
                       </object>
                       <packing>
@@ -40,12 +43,30 @@
                       </packing>
                     </child>
                     <child>
-                      <object class="GtkListBox" id="PlaylistsList">
+                      <object class="GtkScrolledWindow">
                         <property name="visible">True</property>
-                        <property name="can_focus">False</property>
+                        <property name="can_focus">True</property>
+                        <property name="hexpand">True</property>
+                        <property name="hscrollbar_policy">never</property>
+                        <property name="shadow_type">in</property>
+                        <property name="propagate_natural_width">True</property>
+                        <child>
+                          <object class="GtkViewport">
+                            <property name="visible">True</property>
+                            <property name="can_focus">False</property>
+                            <property name="hexpand">True</property>
+                            <child>
+                              <object class="GtkListBox" id="PlaylistsList">
+                                <property name="visible">True</property>
+                                <property name="can_focus">False</property>
+                                <property name="hexpand">True</property>
+                              </object>
+                            </child>
+                          </object>
+                        </child>
                       </object>
                       <packing>
-                        <property name="expand">False</property>
+                        <property name="expand">True</property>
                         <property name="fill">True</property>
                         <property name="position">1</property>
                       </packing>
@@ -62,6 +83,7 @@
                       <object class="GtkLabel" id="PlaylistSongsLabel">
                         <property name="visible">True</property>
                         <property name="can_focus">False</property>
+                        <property name="hexpand">True</property>
                         <property name="label" translatable="yes">Song in your Playlist</property>
                       </object>
                       <packing>
@@ -74,6 +96,7 @@
                       <object class="GtkListBox" id="PlaylistSongsList">
                         <property name="visible">True</property>
                         <property name="can_focus">False</property>
+                        <property name="hexpand">True</property>
                       </object>
                       <packing>
                         <property name="expand">False</property>
