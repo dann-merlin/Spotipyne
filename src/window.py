@@ -23,25 +23,29 @@ from .spotifyGuiBuilder import SpotifyGuiBuilder
 
 
 @Gtk.Template(resource_path='/xyz/merlinx/Spotipyne/window.ui')
-class SpotipyneWindow(Gtk.ApplicationWindow):
+class SpotipyneWindow(Handy.ApplicationWindow):
 	__gtype_name__ = 'SpotipyneWindow'
 
 	Handy.init()
-	squeezer = Gtk.Template.Child()
+	# squeezer = Gtk.Template.Child()
 	headerbar_switcher = Gtk.Template.Child()
 	bottom_switcher = Gtk.Template.Child()
 	MainStack = Gtk.Template.Child()
+	PlaylistsOverview = Gtk.Template.Child()
 	PlaylistsList = Gtk.Template.Child()
+	PlaylistTracks = Gtk.Template.Child()
+	PlaylistTracksList = Gtk.Template.Child()
 
-	def on_headerbar_squeezer_notify(self, squeezer, event):
-		child = squeezer.get_visible_child()
-		self.bottom_switcher.set_reveal(child != self.headerbar_switcher)
+	# def on_headerbar_squeezer_notify(self, squeezer, event):
+	# 	child = squeezer.get_visible_child()
+	# 	self.bottom_switcher.set_reveal(child != self.headerbar_switcher)
 
 	def __init__(self, **kwargs):
 		super().__init__(**kwargs)
-		self.squeezer.connect("notify::visible-child", self.on_headerbar_squeezer_notify)
-		self.spGUI = SpotifyGuiBuilder()
-		self.spGUI.setPlaylistEntries(self.PlaylistsList)
+		# self.squeezer.connect("notify::visible-child", self.on_headerbar_squeezer_notify)
+		self.spGUI = SpotifyGuiBuilder(window=self)
+		self.spGUI.setPlaylistEntries()
+		self.PlaylistsList.connect("row-activated", self.spGUI.activatePlaylist)
 		self.PlaylistsList.show_all()
 
 

@@ -2,9 +2,10 @@
 <!-- Generated with glade 3.36.0 -->
 <interface>
   <requires lib="gtk+" version="3.24"/>
-  <requires lib="libhandy" version="0.0"/>
-  <template class="SpotipyneWindow" parent="GtkApplicationWindow">
+  <requires lib="libhandy" version="1.0"/>
+  <template class="SpotipyneWindow" parent="HdyApplicationWindow">
     <property name="can_focus">False</property>
+    <property name="title" translatable="yes">Spotipyne</property>
     <property name="default_width">1000</property>
     <property name="default_height">600</property>
     <child>
@@ -14,6 +15,26 @@
         <property name="vexpand">True</property>
         <property name="orientation">vertical</property>
         <child>
+          <object class="HdyHeaderBar" id="headerbar">
+            <property name="visible">True</property>
+            <property name="can_focus">False</property>
+            <property name="show_close_button">True</property>
+            <property name="centering_policy">strict</property>
+            <child type="title">
+              <object class="HdyViewSwitcherTitle" id="headerbar_switcher">
+                <property name="visible">True</property>
+                <property name="can_focus">False</property>
+                <property name="stack">MainStack</property>
+              </object>
+            </child>
+          </object>
+          <packing>
+            <property name="expand">False</property>
+            <property name="fill">True</property>
+            <property name="position">0</property>
+          </packing>
+        </child>
+        <child>
           <object class="GtkStack" id="MainStack">
             <property name="visible">True</property>
             <property name="can_focus">False</property>
@@ -22,6 +43,10 @@
               <object class="HdyLeaflet" id="PlaylistsOverview">
                 <property name="visible">True</property>
                 <property name="can_focus">False</property>
+                <property name="hhomogeneous_folded">False</property>
+                <property name="visible_child">Playlists</property>
+                <property name="transition_type">under</property>
+                <property name="interpolate_size">True</property>
                 <property name="can_swipe_back">True</property>
                 <child>
                   <object class="GtkBox" id="Playlists">
@@ -74,13 +99,13 @@
                   </object>
                 </child>
                 <child>
-                  <object class="GtkBox" id="PlaylistSongs">
+                  <object class="GtkBox" id="PlaylistTracks">
                     <property name="visible">True</property>
                     <property name="can_focus">False</property>
                     <property name="hexpand">True</property>
                     <property name="orientation">vertical</property>
                     <child>
-                      <object class="GtkLabel" id="PlaylistSongsLabel">
+                      <object class="GtkLabel" id="PlaylistTracksLabel">
                         <property name="visible">True</property>
                         <property name="can_focus">False</property>
                         <property name="hexpand">True</property>
@@ -104,7 +129,7 @@
                             <property name="visible">True</property>
                             <property name="can_focus">False</property>
                             <child>
-                              <object class="GtkListBox" id="PlaylistSongsList">
+                              <object class="GtkListBox" id="PlaylistTracksList">
                                 <property name="visible">True</property>
                                 <property name="can_focus">False</property>
                                 <property name="hexpand">True</property>
@@ -125,17 +150,34 @@
               <packing>
                 <property name="name">Playlists</property>
                 <property name="title" translatable="yes">Playlists</property>
+                <property name="icon_name">applications-multimedia-symbolic</property>
               </packing>
             </child>
             <child>
-              <object class="GtkLabel">
+              <object class="GtkBox" id="SearchOverview">
                 <property name="visible">True</property>
                 <property name="can_focus">False</property>
-                <property name="label" translatable="yes">label</property>
+                <property name="orientation">vertical</property>
+                <child>
+                  <object class="GtkLabel">
+                    <property name="visible">True</property>
+                    <property name="can_focus">False</property>
+                    <property name="label" translatable="yes">Search not implemented yet...</property>
+                    <attributes>
+                      <attribute name="size" value="14336"/>
+                    </attributes>
+                  </object>
+                  <packing>
+                    <property name="expand">True</property>
+                    <property name="fill">True</property>
+                    <property name="position">0</property>
+                  </packing>
+                </child>
               </object>
               <packing>
-                <property name="name">page1</property>
-                <property name="title" translatable="yes">page1</property>
+                <property name="name">Search</property>
+                <property name="title" translatable="yes">Search</property>
+                <property name="icon_name">edit-find-symbolic</property>
                 <property name="position">1</property>
               </packing>
             </child>
@@ -146,8 +188,9 @@
                 <property name="label" translatable="yes">label</property>
               </object>
               <packing>
-                <property name="name">page2</property>
-                <property name="title" translatable="yes">page2</property>
+                <property name="name">Unused</property>
+                <property name="title" translatable="yes">Unused</property>
+                <property name="icon_name">multimedia-volume-control-symbolic</property>
                 <property name="position">2</property>
               </packing>
             </child>
@@ -155,7 +198,7 @@
           <packing>
             <property name="expand">True</property>
             <property name="fill">True</property>
-            <property name="position">0</property>
+            <property name="position">1</property>
           </packing>
         </child>
         <child>
@@ -163,45 +206,13 @@
             <property name="visible">True</property>
             <property name="can_focus">False</property>
             <property name="stack">MainStack</property>
+            <property name="reveal">True</property>
           </object>
           <packing>
             <property name="expand">False</property>
             <property name="fill">True</property>
-            <property name="position">1</property>
+            <property name="position">2</property>
           </packing>
-        </child>
-      </object>
-    </child>
-    <child type="titlebar">
-      <object class="HdyHeaderBar" id="headerbar">
-        <property name="visible">True</property>
-        <property name="can_focus">False</property>
-        <property name="show_close_button">True</property>
-        <property name="centering_policy">strict</property>
-        <child type="title">
-          <object class="HdySqueezer" id="squeezer">
-            <property name="visible">True</property>
-            <property name="can_focus">False</property>
-            <property name="homogeneous">True</property>
-            <child>
-              <object class="HdyViewSwitcher" id="headerbar_switcher">
-                <property name="visible">True</property>
-                <property name="can_focus">False</property>
-                <property name="stack">MainStack</property>
-              </object>
-            </child>
-            <child>
-              <object class="GtkLabel">
-                <property name="name">title_label</property>
-                <property name="visible">True</property>
-                <property name="can_focus">False</property>
-                <property name="label">Spotipyne</property>
-                <attributes>
-                  <attribute name="weight" value="bold"/>
-                </attributes>
-              </object>
-            </child>
-          </object>
         </child>
       </object>
     </child>
