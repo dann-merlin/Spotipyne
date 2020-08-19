@@ -28,24 +28,39 @@ class SpotipyneWindow(Handy.ApplicationWindow):
 
 	Handy.init()
 	# squeezer = Gtk.Template.Child()
-	headerbar_switcher = Gtk.Template.Child()
-	bottom_switcher = Gtk.Template.Child()
+	HeaderbarSwitcher = Gtk.Template.Child()
+	BottomSwitcher = Gtk.Template.Child()
 	MainStack = Gtk.Template.Child()
 	PlaylistsOverview = Gtk.Template.Child()
 	PlaylistsList = Gtk.Template.Child()
 	PlaylistTracks = Gtk.Template.Child()
 	PlaylistTracksList = Gtk.Template.Child()
+	BackButton = Gtk.Template.Child()
 
 	# def on_headerbar_squeezer_notify(self, squeezer, event):
 	# 	child = squeezer.get_visible_child()
 	# 	self.bottom_switcher.set_reveal(child != self.headerbar_switcher)
 
+	def getCurrentOverview(self):
+		return self.MainStack.get_visible_child()
+
+	def showBackButtonIfApplicable(self, leaflet, childNumber, switchTime):
+		if childNumber == 1:
+			self.BackButton.show()
+
+	def actionBackButton(self, button):
+		button.hide()
+		self.getCurrentOverview().set_visible_child_name("0")
+		self.spGUI.loadPlaylistTracksList(None)
+
 	def __init__(self, **kwargs):
 		super().__init__(**kwargs)
-		# self.squeezer.connect("notify::visible-child", self.on_headerbar_squeezer_notify)
+
+		self.BackButton.connect("clicked", self.actionBackButton)
+		self.BackButton.hide()
 		self.spGUI = SpotifyGuiBuilder(window=self)
 		self.spGUI.setPlaylistEntries()
+		self.spGUI.loadPlaylistTracksList(None)
 		self.PlaylistsList.connect("row-activated", self.spGUI.activatePlaylist)
+		self.PlaylistsOverview.connect("child-switched", self.showBackButtonIfApplicable)
 		self.PlaylistsList.show_all()
-
-
