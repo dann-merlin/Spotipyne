@@ -37,12 +37,14 @@ class SpotifyGuiBuilder:
 		clientID = os.getenv("SPOTIPY_CLIENT_ID",  "72d3a0443ae547db8e6471841f0ac6d7")
 		clientSecret = os.getenv("SPOTIPY_CLIENT_SECRET", "ac0ed069a1f4470c9068690a19b5960e")
 
+		cache_path_dir = XDG_CACHE_HOME / Config.applicationID
+		cache_path_dir.mkdir(parents=True, exist_ok=True)
 		sp_oauth = SpotifyOAuth(
 				username = username,
 				client_id = clientID,
 				client_secret = clientSecret,
 			scope = scope,
-			cache_path = XDG_CACHE_HOME / Config.applicationID / 'auth_token',
+			cache_path =  cache_path_dir / 'auth_token',
 			redirect_uri = "http://127.0.0.1:8080"
 			)
 

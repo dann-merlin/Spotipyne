@@ -20,10 +20,9 @@
         "/share/pkgconfig",
         "*.la",
         "*.a"
-    ],
-    "modules" : [
-        "python3-spotipy.json"
-        "python3-xdg.json"
+    ], "modules" : [
+        "python3-spotipy.json",
+        "python3-xdg.json",
         {
             "name" : "libhandy",
             "buildsystem" : "meson",
@@ -39,8 +38,8 @@
             "sources" : [
                 {
                     "type" : "git",
-                    "url" : "https://source.puri.sm/Librem5/libhandy.git",
-                    "branch": "v0.80.0"
+                    "url" : "https://gitlab.gnome.org/GNOME/libhandy.git",
+                    "branch": "0.83.0"
                 }
             ]
         },
