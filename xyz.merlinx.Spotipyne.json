@@ -1,7 +1,7 @@
 {
     "app-id" : "xyz.merlinx.Spotipyne",
     "runtime" : "org.gnome.Platform",
-    "runtime-version" : "3.34",
+    "runtime-version" : "3.36",
     "sdk" : "org.gnome.Sdk",
     "command" : "spotipyne",
     "finish-args" : [
@@ -20,7 +20,8 @@
         "/share/pkgconfig",
         "*.la",
         "*.a"
-    ], "modules" : [
+    ],
+    "modules" : [
         "python3-spotipy.json",
         "python3-xdg.json",
         {
@@ -39,7 +40,7 @@
                 {
                     "type" : "git",
                     "url" : "https://gitlab.gnome.org/GNOME/libhandy.git",
-                    "branch": "0.83.0"
+                    "branch" : "0.83.0"
                 }
             ]
         },

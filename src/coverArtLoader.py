@@ -9,8 +9,8 @@ from .config import Config
 
 class CoverArtLoader:
 
-	def __init__(self):
-		pass
+	# def __init__(self):
+	# 	pass
 
 	def downloadToFile(self, url, toFile):
 		response = requests.get(url)
@@ -21,25 +21,34 @@ class CoverArtLoader:
 		image = Gtk.Image.new_from_pixbuf(pixbuf)
 		return image
 
-	def getPlaylistCoverPath(self, playlistID):
-		playlistCachePathDir = XDG_CACHE_HOME / Config.applicationID / 'coverArt' / 'playlists'
+	def getCoverPath(self, coverType, ID):
+		possibleTypes = [ 'playlist', 'album' ]
+		if coverType not in possibleTypes:
+			coverType = 'ERRORTypeDoesNotExist'
+		playlistCachePathDir = XDG_CACHE_HOME / Config.applicationID / 'coverArt' / coverType
 		playlistCachePathDir.mkdir(parents=True, exist_ok=True)
-		playlistCachePath = playlistCachePathDir / playlistID
+		playlistCachePath = playlistCachePathDir / ID
 		return playlistCachePath
 
-	def loadPlaylistCoverFromCache(self, playlistID):
-		playlistCachePath = self.getPlaylistCoverPath(playlistID)
-		if playlistCachePath.is_file():
+	def loadCoverFromCache(self, coverType, ID):
+		cachePath = self.getCoverPath(coverType, ID)
+		if cachePath.is_file():
 			imageSize=60
-			return self.loadImage(path=playlistCachePath, width=imageSize, height=imageSize)
+			return self.loadImage(path=cachePath, width=imageSize, height=imageSize)
 		return None
 
-	def loadPlaylistCoverFromDownload(self, url, playlistID):
-		self.downloadToFile(url=url, toFile=self.getPlaylistCoverPath(playlistID))
-		return self.loadPlaylistCoverFromCache(playlistID)
+	def loadCoverFromDownload(self, url, coverType, ID):
+		self.downloadToFile(url=url, toFile=self.getCoverPath(coverType, ID))
+		return self.loadCoverFromCache(coverType, ID)
 
-	def loadPlaylistCover(self, playlistID, url):
-		cover = self.loadPlaylistCoverFromCache(playlistID)
+	def loadCover(self, coverType, ID, url):
+		cover = self.loadCoverFromCache(coverType, ID)
 		if cover:
 			return cover
-		return self.loadPlaylistCoverFromDownload(playlistID=playlistID, url=url)
+		return self.loadCoverFromDownload(coverType=coverType, ID=ID, url=url)
+
+	def loadPlaylistCover(self, ID, url):
+		return self.loadCover('playlist', ID, url)
+
+	def loadAlbumCover(self, ID, url):
+		return self.loadCover('album', ID, url)

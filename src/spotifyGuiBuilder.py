@@ -8,7 +8,7 @@ import spotipy
 from spotipy.oauth2 import SpotifyOAuth
 
 import gi
-from gi.repository import Gtk, GdkPixbuf
+from gi.repository import Gtk, GdkPixbuf, GLib, GObject
 
 from .config import Config
 from .coverArtLoader import CoverArtLoader
@@ -53,6 +53,27 @@ class SpotifyGuiBuilder:
 		self.coverArtLoader = CoverArtLoader()
 		self.currentPlaylistID = ''
 
+	def buildTrackEntry(self, trackResponse):
+		track = trackResponse['track']
+		row = TrackListRow(track['id'])
+		hbox = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL)
+		imageUrl = track['album']['images'][0]['url']
+		coverArt = self.coverArtLoader.loadAlbumCover(url=imageUrl, ID=track['id'])
+		if coverArt:
+			hbox.pack_start(coverArt, False, True, 0)
+
+		trackNameString = track['name']
+		artistString = reduce(lambda a, b: {'name': a['name'] + ", " + b['name']},
+					track['artists'][1:],
+					track['artists'][0]
+					)['name']
+		trackLabelString = '<b>' + GLib.markup_escape_text(trackNameString) + '</b>' + '\n' + GLib.markup_escape_text(artistString)
+		trackLabel = Gtk.Label(xalign=0)
+		trackLabel.set_markup(trackLabelString)
+		hbox.pack_end(trackLabel, True, True, 0)
+		row.add(hbox)
+		return row
+
 	def loadPlaylistTracksList(self, playlist):
 		tracksList = self.window.PlaylistTracksList
 		if playlist == None:
@@ -76,7 +97,7 @@ class SpotifyGuiBuilder:
 			while offset + 1 < total:
 				tracksResponse = self.sp.playlist_tracks(
 					playlist_id=playlistID,
-					fields='items(track(id,name,artists(name))),offset,total',
+					fields='items(track(id,name,artists(name),album(images))),offset,total',
 					offset=offset,
 					limit=limit,
 					)
@@ -95,30 +116,18 @@ class SpotifyGuiBuilder:
 				tracksList.add(row)
 
 			for item in allTracks[0]:
-				track = item['track']
-				row = TrackListRow(track['id'])
-				hbox = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL)
-				# imageUrl = item['images'][0]['url']
-				# coverArt = self.coverArtLoader.loadPlaylistCover(url=imageUrl, playlistID=item['id'])
-				# if coverArt:
-				# 	hbox.pack_start(coverArt, False, True, 0)
-				nameLabel = Gtk.Label(track['name'], xalign=0)
-				hbox.pack_end(nameLabel, True, True, 0)
-				artistsLabel = Gtk.Label(
-						reduce(lambda a, b: {'name': a['name'] + ", " + b['name']},
-							track['artists'][1:],
-							track['artists'][0]
-							)['name'],
-						xalign=0)
-				hbox.pack_end(artistsLabel, True, True, 0)
-				row.add(hbox)
-				tracksList.add(row)
+				print("item:")
+				print(item)
+				trackEntry = self.buildTrackEntry(item)
+				tracksList.add(trackEntry)
 
 		tracksList.show_all()
 
 	def activatePlaylist(self, playlistsList, playlist):
-		self.loadPlaylistTracksList(playlist)
-		self.window.PlaylistsOverview.set_visible_child(self.window.PlaylistTracks)
+		def activatePlaylistHidden(self):
+			self.loadPlaylistTracksList(playlist)
+			self.window.PlaylistsOverview.set_visible_child(self.window.PlaylistTracks)
+		Thread(target=activatePlaylistHidden
 
 
 	def setPlaylistEntries(self):
@@ -136,7 +145,7 @@ class SpotifyGuiBuilder:
 			row = PlaylistsListRow(item['id'])
 			hbox = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL)
 			imageUrl = item['images'][0]['url']
-			coverArt = self.coverArtLoader.loadPlaylistCover(url=imageUrl, playlistID=item['id'])
+			coverArt = self.coverArtLoader.loadPlaylistCover(url=imageUrl, ID=item['id'])
 			if coverArt:
 				hbox.pack_start(coverArt, False, True, 0)
 
