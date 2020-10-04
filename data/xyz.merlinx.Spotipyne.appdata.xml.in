@@ -3,6 +3,5 @@
 	<id>xyz.merlinx.Spotipyne.desktop</id>
 	<metadata_license>CC0-1.0</metadata_license>
 	<project_license>GPL-3.0-or-later</project_license>
-	<description>
-	</description>
+	<description><p>A gtk spotify client capable of handling mobile formfactors.</p></description>
 </component>

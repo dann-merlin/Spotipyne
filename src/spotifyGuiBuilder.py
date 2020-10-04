@@ -127,7 +127,7 @@ class SpotifyGuiBuilder:
 		def activatePlaylistHidden(self):
 			self.loadPlaylistTracksList(playlist)
 			self.window.PlaylistsOverview.set_visible_child(self.window.PlaylistTracks)
-		Thread(target=activatePlaylistHidden
+		# Thread(target=activatePlaylistHidden
 
 
 	def setPlaylistEntries(self):

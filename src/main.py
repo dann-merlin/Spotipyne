@@ -37,7 +37,6 @@ class Application(Gtk.Application):
             win = SpotipyneWindow(application=self)
         win.present()
 
-
 def main(version):
     app = Application()
     return app.run(sys.argv)
