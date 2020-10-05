@@ -60,11 +60,15 @@ class SpotifyGuiBuilder:
 		track = trackResponse['track']
 		row = TrackListRow(track['id'])
 		hbox = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL)
-		imageUrl = track['album']['images'][0]['url']
-		coverArt = self.coverArtLoader.loadAlbumCover(url=imageUrl, ID=track['id'])
-		if coverArt:
+		try:
+			imageUrl = track['album']['images'][0]['url']
+			coverArt = self.coverArtLoader.getLoadingImage()
 			hbox.pack_start(coverArt, False, True, 0)
-
+			self.coverArtLoader.asyncUpdateAlbumCover(hbox, coverArt, url=imageUrl, ID=track['album']['id'])
+		except IndexError:
+			coverArt = self.coverArtLoader.getErrorImage()
+			hbox.pack_start(coverArt, False, True, 0)
+			print("Failed retrieveing the imageUrl for the track: " + str(track))
 		trackNameString = track['name']
 		artistString = reduce(lambda a, b: {'name': a['name'] + ", " + b['name']},
 					track['artists'][1:],
@@ -77,59 +81,50 @@ class SpotifyGuiBuilder:
 		row.add(hbox)
 		return row
 
-	def loadPlaylistTracksList(self, playlist):
-		tracksList = self.window.PlaylistTracksList
-		if playlist == None:
-			removeMe = tracksList.get_children()
-			for elem in removeMe:
-				tracksList.remove(elem)
+	def clearList(self, listToClear):
+		for child in listToClear.get_children():
+			listToClear.remove(child)
 
-			row = Gtk.ListBoxRow()
-			label = Gtk.Label(label="Select a playlist")
-			row.add(label)
-			tracksList.add(row)
-		else:
-			playlistID = playlist.getPlaylistID()
-			if self.currentPlaylistID == playlistID:
-				return
-			self.currentPlaylistID = playlistID
-			allTracks=[]
+
+	def asyncLoadPlaylistTracks(self, tracksList, playlistID):
+		if self.currentPlaylistID == playlistID:
+			return
+
+		self.clearList(tracksList)
+
+		def addTrackEntry(track):
+			trackEntry = self.buildTrackEntry(track)
+			tracksList.add(trackEntry)
+
+		def loadPlaylistTracks():
+			allTracks = []
 			offset = 0
-			limit = 100
-			total = offset + 2
-			while offset + 1 < total:
+			pageSize = 100
+			keepGoing = True
+			while keepGoing:
 				tracksResponse = self.sp.playlist_tracks(
 					playlist_id=playlistID,
-					fields='items(track(id,name,artists(name),album(images))),offset,total',
-					offset=offset,
-					limit=limit,
-					)
-				allTracks.append(tracksResponse['items'])
-				total = tracksResponse['total']
-				offset = tracksResponse['offset'] + limit
+					fields='items(track(id,name,artists(name),album(id,images))),next',
+					limit=pageSize,
+					offset=offset)
+				keepGoing = tracksResponse['next'] != None
+				offset += pageSize
+				allTracks += tracksResponse['items']
 
-			removeMe = tracksList.get_children()
-			for elem in removeMe:
-				tracksList.remove(elem)
+			def addAllTrackEntries():
+				try:
+					for track in allTracks:
+						if self.window.TracksListStopEvent.is_set():
+							break
+						addTrackEntry(track)
+					tracksList.show_all()
+				finally:
+					self.window.TracksListResumeEvent.set()
 
-			if len(allTracks) == 0:
-				row = Gtk.ListBoxRow()
-				label = Gtk.Label(label="No playlists found.")
-				row.add(label)
-				tracksList.add(row)
+			GLib.idle_add(addAllTrackEntries)
 
-			for item in allTracks[0]:
-				print("item:")
-				print(item)
-				trackEntry = self.buildTrackEntry(item)
-				tracksList.add(trackEntry)
-
-		tracksList.show_all()
-
-	# def activatePlaylist(self, playlistsList, playlist):
-	# 	def activatePlaylistHidden(self):
-	# 		self.loadPlaylistTracksList(playlist)
-	# 		self.window.PlaylistsOverview.set_visible_child(self.window.PlaylistTracks)
+		thread = threading.Thread(target=loadPlaylistTracks)
+		thread.start()
 
 	def asyncLoadPlaylists(self):
 		def addPlaylistEntry(playlist):
@@ -137,7 +132,7 @@ class SpotifyGuiBuilder:
 			hbox = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL)
 			# TODO async load coverArt
 			imageUrl = playlist['images'][0]['url']
-			coverArt = self.coverArtLoader.getLoadingCover()
+			coverArt = self.coverArtLoader.getLoadingImage()
 			hbox.pack_start(coverArt, False, True, 0)
 			self.coverArtLoader.asyncUpdatePlaylistCover(hbox, coverArt, url=imageUrl, ID=playlist['id'])
 			nameLabel = Gtk.Label(playlist['name'], xalign=0)
@@ -145,7 +140,6 @@ class SpotifyGuiBuilder:
 			row.add(hbox)
 			self.window.PlaylistsList.add(row)
 			self.window.PlaylistsList.show_all()
-			print("Finished adding!")
 
 		def loadPlaylists():
 			allPlaylists = []
@@ -158,10 +152,11 @@ class SpotifyGuiBuilder:
 				offset += pageSize
 				allPlaylists += playlistsResponse['items']
 
-			for playlist in allPlaylists:
-				print("This is a playlist:")
-				print(playlist)
-				GLib.idle_add(addPlaylistEntry, playlist)
+			def addAllPlaylistEntries():
+				for playlist in allPlaylists:
+					addPlaylistEntry(playlist)
+
+			GLib.idle_add(addAllPlaylistEntries)
 
 		thread = threading.Thread(target=loadPlaylists)
 		thread.start()

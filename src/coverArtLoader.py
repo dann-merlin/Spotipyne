@@ -15,7 +15,7 @@ class CoverArtLoader:
 		self.icon_theme = Gtk.IconTheme.get_default()
 
 
-	def getLoadingCover(self):
+	def getLoadingImage(self):
 		return Gtk.Image.new_from_pixbuf(self.icon_theme.load_icon("image-loading", self.imageSize, Gtk.IconLookupFlags.FORCE_SYMBOLIC))
 
 	def getErrorImage(self):
@@ -31,9 +31,6 @@ class CoverArtLoader:
 		smallerValue = height if height < width else width
 		src_x = (width - smallerValue) // 2
 		src_y = (height - smallerValue) // 2
-		print("Height: " + str(height) + ", Width: " + str(width) + ", smaller: " + str(smallerValue))
-		print("src_x: " + str(src_x))
-		print("src_y: " + str(src_y))
 		return pixbuf.new_subpixbuf(src_x, src_y, smallerValue, smallerValue)
 
 	def loadImage(self, path, width, height):

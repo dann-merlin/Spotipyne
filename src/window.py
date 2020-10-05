@@ -15,6 +15,8 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+import threading
+
 import gi
 gi.require_version('Handy', '1')
 from gi.repository import Gtk, Handy
@@ -51,16 +53,27 @@ class SpotipyneWindow(Handy.ApplicationWindow):
 	def actionBackButton(self, button):
 		button.hide()
 		self.getCurrentOverview().set_visible_child_name("0")
-		self.spGUI.loadPlaylistTracksList(None)
+		self.spGUI.loadPlaylistTracksList(PlaylistTracksList, None)
+
+	def onPlaylistActivated(self, PlaylistsList, PlaylistRow):
+		self.TracksListStopEvent.set()
+
+		self.TracksListResumeEvent.wait()
+		self.TracksListResumeEvent.clear()
+		self.TracksListStopEvent.clear()
+		self.spGUI.asyncLoadPlaylistTracks(self.PlaylistTracksList, PlaylistRow.getPlaylistID())
 
 	def __init__(self, **kwargs):
 		super().__init__(**kwargs)
 
+		self.TracksListStopEvent = threading.Event()
+		self.TracksListResumeEvent = threading.Event()
+		self.TracksListResumeEvent.set()
 		self.BackButton.connect("clicked", self.actionBackButton)
 		self.BackButton.hide()
 		self.spGUI = SpotifyGuiBuilder(window=self)
 		# self.spGUI.setPlaylistEntries()
 		# self.spGUI.loadPlaylistTracksList(None)
-		# self.PlaylistsList.connect("row-activated", self.spGUI.activatePlaylist)
+		self.PlaylistsList.connect("row-activated", self.onPlaylistActivated)
 		self.PlaylistsOverview.connect("child-switched", self.showBackButtonIfApplicable)
 		self.PlaylistsList.show_all()
