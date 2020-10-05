@@ -1,23 +1,53 @@
 # add xdg to flatpak
+import threading
 from xdg import XDG_CACHE_HOME
 
 import requests
 import gi
-from gi.repository import Gtk, GdkPixbuf
+from gi.repository import Gtk, GdkPixbuf, GLib
 
 from .config import Config
 
 class CoverArtLoader:
 
-	# def __init__(self):
-	# 	pass
+	def __init__(self):
+		self.imageSize = 60
+		self.icon_theme = Gtk.IconTheme.get_default()
+
+
+	def getLoadingCover(self):
+		return Gtk.Image.new_from_pixbuf(self.icon_theme.load_icon("image-loading", self.imageSize, Gtk.IconLookupFlags.FORCE_SYMBOLIC))
+
+	def getErrorImage(self):
+		return Gtk.Image.new_from_pixbuf(self.icon_theme.load_icon("image-missing", self.imageSize, Gtk.IconLookupFlags.FORCE_SYMBOLIC))
 
 	def downloadToFile(self, url, toFile):
 		response = requests.get(url)
 		open(toFile, 'wb').write(response.content)
 
+	def cropToSquare(self, pixbuf):
+		height = pixbuf.get_height()
+		width = pixbuf.get_width()
+		smallerValue = height if height < width else width
+		src_x = (width - smallerValue) // 2
+		src_y = (height - smallerValue) // 2
+		print("Height: " + str(height) + ", Width: " + str(width) + ", smaller: " + str(smallerValue))
+		print("src_x: " + str(src_x))
+		print("src_y: " + str(src_y))
+		return pixbuf.new_subpixbuf(src_x, src_y, smallerValue, smallerValue)
+
 	def loadImage(self, path, width, height):
-		pixbuf = GdkPixbuf.Pixbuf.new_from_file_at_scale(filename=str(path), width=width, height=height, preserve_aspect_ratio=True)
+		pixbuf = GdkPixbuf.Pixbuf.new_from_file_at_size(filename=str(path), width=width, height=height)
+
+		buf_height = pixbuf.get_height()
+		buf_width = pixbuf.get_width()
+		if buf_width != buf_height:
+			if buf_width > buf_height:
+				pixbuf = GdkPixbuf.Pixbuf.new_from_file_at_size(filename=str(path), width=-1, height=height)
+			else:
+				pixbuf = GdkPixbuf.Pixbuf.new_from_file_at_size(filename=str(path), width=width, height=-1)
+			pixbuf = self.cropToSquare(pixbuf)
+
 		image = Gtk.Image.new_from_pixbuf(pixbuf)
 		return image
 
@@ -33,22 +63,38 @@ class CoverArtLoader:
 	def loadCoverFromCache(self, coverType, ID):
 		cachePath = self.getCoverPath(coverType, ID)
 		if cachePath.is_file():
-			imageSize=60
-			return self.loadImage(path=cachePath, width=imageSize, height=imageSize)
+			return self.loadImage(path=cachePath, width=self.imageSize, height=self.imageSize)
 		return None
 
-	def loadCoverFromDownload(self, url, coverType, ID):
-		self.downloadToFile(url=url, toFile=self.getCoverPath(coverType, ID))
-		return self.loadCoverFromCache(coverType, ID)
+	# def loadCoverFromDownload(self, url, coverType, ID):
+	# 	self.downloadToFile(url=url, toFile=self.getCoverPath(coverType, ID))
+	# 	return self.loadCoverFromCache(coverType, ID)
 
-	def loadCover(self, coverType, ID, url):
-		cover = self.loadCoverFromCache(coverType, ID)
-		if cover:
-			return cover
-		return self.loadCoverFromDownload(coverType=coverType, ID=ID, url=url)
+	def asyncUpdateCover(self, coverType, parent, updateMe, ID, url):
+		def updateInParent(newChild):
+			parent.remove(updateMe)
+			parent.pack_start(newChild, False, True, 0)
+			parent.show_all()
 
-	def loadPlaylistCover(self, ID, url):
-		return self.loadCover('playlist', ID, url)
+		def tryReloadOrFail():
+			newCover = self.loadCoverFromCache(coverType=coverType, ID=ID)
+			if not newCover:
+				newCover = self.getErrorImage()
+			updateInParent(newCover)
 
-	def loadAlbumCover(self, ID, url):
-		return self.loadCover('album', ID, url)
+		def updateCover():
+			self.downloadToFile(url=url, toFile=self.getCoverPath(coverType, ID))
+			GLib.idle_add(tryReloadOrFail)
+
+		newCover = self.loadCoverFromCache(coverType=coverType, ID=ID)
+		if not newCover:
+			thread = threading.Thread(target=updateCover)
+			thread.start()
+		else:
+			updateInParent(newCover)
+
+	def asyncUpdatePlaylistCover(self, parent, updateMe, ID, url):
+		self.asyncUpdateCover('playlist', parent, updateMe, ID, url)
+
+	def asyncUpdateAlbumCover(self, parent, updateMe, ID, url):
+		self.asyncUpdateCover('album', parent, updateMe, ID, url)

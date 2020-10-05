@@ -1,4 +1,5 @@
 import os
+import threading
 
 from functools import reduce
 
@@ -52,6 +53,8 @@ class SpotifyGuiBuilder:
 
 		self.coverArtLoader = CoverArtLoader()
 		self.currentPlaylistID = ''
+
+		self.asyncLoadPlaylists()
 
 	def buildTrackEntry(self, trackResponse):
 		track = trackResponse['track']
@@ -123,33 +126,68 @@ class SpotifyGuiBuilder:
 
 		tracksList.show_all()
 
-	def activatePlaylist(self, playlistsList, playlist):
-		def activatePlaylistHidden(self):
-			self.loadPlaylistTracksList(playlist)
-			self.window.PlaylistsOverview.set_visible_child(self.window.PlaylistTracks)
-		# Thread(target=activatePlaylistHidden
+	# def activatePlaylist(self, playlistsList, playlist):
+	# 	def activatePlaylistHidden(self):
+	# 		self.loadPlaylistTracksList(playlist)
+	# 		self.window.PlaylistsOverview.set_visible_child(self.window.PlaylistTracks)
 
-
-	def setPlaylistEntries(self):
-		PlaylistsList = self.window.PlaylistsList
-		results = self.sp.current_user_playlists(limit=50)
-
-		if len(results['items']) == 0:
-			row = Gtk.ListBoxRow()
-			label = Gtk.Label(label="No playlists found.")
-			row.add(label)
-			PlaylistsList.add(row)
-			return
-
-		for item in results['items']:
-			row = PlaylistsListRow(item['id'])
+	def asyncLoadPlaylists(self):
+		def addPlaylistEntry(playlist):
+			row = PlaylistsListRow(playlist['id'])
 			hbox = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL)
-			imageUrl = item['images'][0]['url']
-			coverArt = self.coverArtLoader.loadPlaylistCover(url=imageUrl, ID=item['id'])
-			if coverArt:
-				hbox.pack_start(coverArt, False, True, 0)
-
-			label = Gtk.Label(item['name'], xalign=0)
-			hbox.pack_end(label, True, True, 0)
+			# TODO async load coverArt
+			imageUrl = playlist['images'][0]['url']
+			coverArt = self.coverArtLoader.getLoadingCover()
+			hbox.pack_start(coverArt, False, True, 0)
+			self.coverArtLoader.asyncUpdatePlaylistCover(hbox, coverArt, url=imageUrl, ID=playlist['id'])
+			nameLabel = Gtk.Label(playlist['name'], xalign=0)
+			hbox.pack_end(nameLabel, True, True, 0)
 			row.add(hbox)
-			PlaylistsList.add(row)
+			self.window.PlaylistsList.add(row)
+			self.window.PlaylistsList.show_all()
+			print("Finished adding!")
+
+		def loadPlaylists():
+			allPlaylists = []
+			offset = 0
+			pageSize = 50
+			keepGoing = True
+			while keepGoing:
+				playlistsResponse = self.sp.current_user_playlists(limit=pageSize, offset=offset)
+				keepGoing = playlistsResponse['next'] != None
+				offset += pageSize
+				allPlaylists += playlistsResponse['items']
+
+			for playlist in allPlaylists:
+				print("This is a playlist:")
+				print(playlist)
+				GLib.idle_add(addPlaylistEntry, playlist)
+
+		thread = threading.Thread(target=loadPlaylists)
+		thread.start()
+
+
+
+	# def setPlaylistEntries(self):
+	# 	PlaylistsList = self.window.PlaylistsList
+	# 	results = self.sp.current_user_playlists(limit=50)
+
+	# 	if len(results['items']) == 0:
+	# 		row = Gtk.ListBoxRow()
+	# 		label = Gtk.Label(label="No playlists found.")
+	# 		row.add(label)
+	# 		PlaylistsList.add(row)
+	# 		return
+
+	# 	for item in results['items']:
+	# 		row = PlaylistsListRow(item['id'])
+	# 		hbox = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL)
+	# 		imageUrl = item['images'][0]['url']
+	# 		coverArt = self.coverArtLoader.loadPlaylistCover(url=imageUrl, ID=item['id'])
+	# 		if coverArt:
+	# 			hbox.pack_start(coverArt, False, True, 0)
+
+	# 		label = Gtk.Label(item['name'], xalign=0)
+	# 		hbox.pack_end(label, True, True, 0)
+	# 		row.add(hbox)
+	# 		PlaylistsList.add(row)
