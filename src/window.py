@@ -38,6 +38,8 @@ class SpotipyneWindow(Handy.ApplicationWindow):
 	PlaylistTracks = Gtk.Template.Child()
 	PlaylistTracksList = Gtk.Template.Child()
 	BackButton = Gtk.Template.Child()
+	Revealer = Gtk.Template.Child()
+	RevealButton = Gtk.Template.Child()
 
 	# def on_headerbar_squeezer_notify(self, squeezer, event):
 	# 	child = squeezer.get_visible_child()
@@ -63,17 +65,19 @@ class SpotipyneWindow(Handy.ApplicationWindow):
 		self.TracksListStopEvent.clear()
 		self.spGUI.asyncLoadPlaylistTracks(self.PlaylistTracksList, PlaylistRow.getPlaylistID())
 
+	def toggleReveal(self, button):
+		self.Revealer.set_reveal_child( not self.Revealer.get_reveal_child())
+
 	def __init__(self, **kwargs):
 		super().__init__(**kwargs)
 
 		self.TracksListStopEvent = threading.Event()
 		self.TracksListResumeEvent = threading.Event()
 		self.TracksListResumeEvent.set()
-		self.BackButton.connect("clicked", self.actionBackButton)
-		self.BackButton.hide()
 		self.spGUI = SpotifyGuiBuilder(window=self)
-		# self.spGUI.setPlaylistEntries()
-		# self.spGUI.loadPlaylistTracksList(None)
 		self.PlaylistsList.connect("row-activated", self.onPlaylistActivated)
+		self.RevealButton.connect("clicked", self.toggleReveal)
+		# self.BackButton.connect("clicked", self.actionBackButton)
+		# self.BackButton.hide()
 		self.PlaylistsOverview.connect("child-switched", self.showBackButtonIfApplicable)
 		self.PlaylistsList.show_all()
