@@ -53,6 +53,7 @@ class SpotipyneWindow(Handy.ApplicationWindow):
 		self.PlaylistsOverview.set_visible_child_name("0")
 
 	def onPlaylistTracksListRowActivated(self, PlaylistTracksList, TrackRow):
+		# TODO
 		index = 0
 		try:
 			index = PlaylistTracksList.index(TrackRow)
@@ -67,7 +68,7 @@ class SpotipyneWindow(Handy.ApplicationWindow):
 		self.TracksListResumeEvent.wait()
 		self.TracksListResumeEvent.clear()
 		self.TracksListStopEvent.clear()
-		self.spGUI.asyncLoadPlaylistTracks(self.PlaylistTracksList, PlaylistRow.getPlaylistID())
+		self.spGUI.asyncLoadPlaylistTracks(self.PlaylistTracksList, PlaylistRow.getPlaylistID(), self.TracksListResumeEvent, self.TracksListStopEvent)
 		self.PlaylistsOverview.set_visible_child_name("1")
 
 	def toggleReveal(self, button):
@@ -76,23 +77,34 @@ class SpotipyneWindow(Handy.ApplicationWindow):
 	def playlist_tracks_focused(self):
 		return self.PlaylistsOverview.get_visible_child() == self.PlaylistTracks
 
+	def initializePlaylistsOverview(self):
+		def initBackButton():
+			self.backButtonPlaylistsOverview.set_property("active", False)
+			self.BackButtonBox.remove(self.BackButtonBox.get_children()[0])
+			self.backButtonPlaylistsOverview.visible_child_add_activation_widget(self.PlaylistTracks)
+			self.backButtonPlaylistsOverview.visible_child_add_deactivation_widget(self.Playlists)
+			self.backButtonPlaylistsOverview.addRequirement(self.playlist_tracks_focused)
+			self.BackButtonBox.add(self.backButtonPlaylistsOverview)
+			self.PlaylistsOverview.bind_property("folded", self.backButtonPlaylistsOverview, "active")
+			self.PlaylistsOverview.bind_property("visible-child", self.backButtonPlaylistsOverview, "visible_child_fake")
+			self.PlaylistsOverview.bind_property("folded", self.backButtonPlaylistsOverview, "visible")
+			self.backButtonPlaylistsOverview.connect("clicked", self.onPlaylistOverviewBackButtonClicked)
+			self.BackButtonBox.show_all()
+
+		def initLists():
+			self.TracksListStopEvent = threading.Event()
+			self.TracksListResumeEvent = threading.Event()
+			self.TracksListResumeEvent.set()
+			self.PlaylistsList.connect("row-activated", self.onPlaylistsListRowActivated)
+			self.spGUI = SpotifyGuiBuilder()
+			self.spGUI.asyncLoadPlaylists(self.PlaylistsList)
+
+		initBackButton()
+		initLists()
+
 	def __init__(self, **kwargs):
 		super().__init__(**kwargs)
-		self.backButtonPlaylistsOverview.set_property("active", False)
-		self.BackButtonBox.remove(self.BackButtonBox.get_children()[0])
-		self.backButtonPlaylistsOverview.visible_child_add_activation_widget(self.PlaylistTracks)
-		self.backButtonPlaylistsOverview.visible_child_add_deactivation_widget(self.Playlists)
-		self.backButtonPlaylistsOverview.addRequirement(self.playlist_tracks_focused)
-		self.BackButtonBox.add(self.backButtonPlaylistsOverview)
-		self.BackButtonBox.show_all()
-		self.TracksListStopEvent = threading.Event()
-		self.TracksListResumeEvent = threading.Event()
-		self.TracksListResumeEvent.set()
-		self.spGUI = SpotifyGuiBuilder(window=self)
-		self.PlaylistsList.connect("row-activated", self.onPlaylistsListRowActivated)
-		self.PlaylistsOverview.bind_property("folded", self.backButtonPlaylistsOverview, "active")
-		self.PlaylistsOverview.bind_property("visible-child", self.backButtonPlaylistsOverview, "visible_child_fake")
-		self.PlaylistsOverview.bind_property("folded", self.backButtonPlaylistsOverview, "visible")
-		self.backButtonPlaylistsOverview.connect("clicked", self.onPlaylistOverviewBackButtonClicked)
+
+		self.initializePlaylistsOverview()
+
 		self.RevealButton.connect("clicked", self.toggleReveal)
-		self.PlaylistsList.show_all()

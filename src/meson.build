@@ -33,6 +33,7 @@ spotipyne_sources = [
   'coverArtLoader.py',
   'backButton.py',
   'spotifyPlayer.py',
+  'spotify.py',
   'config.py',
 ]
 
