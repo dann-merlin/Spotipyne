@@ -30,14 +30,23 @@ from .spotify import Spotify as sp
 
 class TrackListRow(Gtk.ListBoxRow):
 
-	def __init__(self, trackID, **kwargs):
+	def __init__(self, trackID, uri, **kwargs):
 		super().__init__(**kwargs)
+		self.trackID = trackID
+		self.uri = uri
+
+	def getUri(self):
+		return self.uri
 
 class PlaylistsListRow(Gtk.ListBoxRow):
 
-	def __init__(self, playlistID, **kwargs):
+	def __init__(self, playlistID, uri, **kwargs):
 		super().__init__(**kwargs)
 		self.playlistID = playlistID
+		self.uri = uri
+
+	def getUri(self):
+		return self.uri
 
 	def getPlaylistID(self):
 		return self.playlistID
@@ -51,7 +60,7 @@ class SpotifyGuiBuilder:
 
 	def buildTrackEntry(self, trackResponse):
 		track = trackResponse['track']
-		row = TrackListRow(track['id'])
+		row = TrackListRow(track['id'], track['uri'])
 		hbox = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL)
 		try:
 			imageUrl = track['album']['images'][0]['url']
@@ -90,6 +99,7 @@ class SpotifyGuiBuilder:
 
 		self.clearList(tracksList)
 
+		# TODO use insert
 		def addTrackEntry(track):
 			trackEntry = self.buildTrackEntry(track)
 			tracksList.add(trackEntry)
@@ -102,7 +112,7 @@ class SpotifyGuiBuilder:
 			while keepGoing:
 				tracksResponse = sp.get().playlist_tracks(
 					playlist_id=playlistID,
-					fields='items(track(id,name,artists(name),album(id,images))),next',
+					fields='items(track(uri,id,name,artists(name),album(id,images))),next',
 					limit=pageSize,
 					offset=offset)
 				keepGoing = tracksResponse['next'] != None
@@ -130,8 +140,9 @@ class SpotifyGuiBuilder:
 		thread.start()
 
 	def asyncLoadPlaylists(self, playlistsList):
+		# TODO use insert
 		def addPlaylistEntry(playlist):
-			row = PlaylistsListRow(playlist['id'])
+			row = PlaylistsListRow(playlist['id'], playlist['uri'])
 			hbox = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL)
 			imageUrl = playlist['images'][0]['url']
 			coverArt = self.coverArtLoader.getLoadingImage()

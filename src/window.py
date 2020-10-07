@@ -22,6 +22,7 @@ gi.require_version('Handy', '1')
 from gi.repository import Gtk, Handy
 
 from .spotifyGuiBuilder import SpotifyGuiBuilder
+from .spotify import Spotify as sp
 from .backButton import BackButton
 
 def static_vars(**kwargs):
@@ -53,15 +54,11 @@ class SpotipyneWindow(Handy.ApplicationWindow):
 		self.PlaylistsOverview.set_visible_child_name("0")
 
 	def onPlaylistTracksListRowActivated(self, PlaylistTracksList, TrackRow):
-		# TODO
-		index = 0
+		uri = self.PlaylistsList.get_selected_row().getUri()
 		try:
-			index = PlaylistTracksList.index(TrackRow)
-		except ValueError as e:
+			sp.get().start_playback(context_uri=uri, offset={ "uri": TrackRow.getUri() })
+		except Exception as e:
 			print(e)
-			return
-		# playlistUri = PlaylistTbV
-
 
 	def onPlaylistsListRowActivated(self, PlaylistsList, PlaylistRow):
 		self.TracksListStopEvent.set()
@@ -85,10 +82,11 @@ class SpotipyneWindow(Handy.ApplicationWindow):
 			self.backButtonPlaylistsOverview.visible_child_add_deactivation_widget(self.Playlists)
 			self.backButtonPlaylistsOverview.addRequirement(self.playlist_tracks_focused)
 			self.BackButtonBox.add(self.backButtonPlaylistsOverview)
-			self.PlaylistsOverview.bind_property("folded", self.backButtonPlaylistsOverview, "active")
+			# self.PlaylistsOverview.bind_property("folded", self.backButtonPlaylistsOverview, "active")
 			self.PlaylistsOverview.bind_property("visible-child", self.backButtonPlaylistsOverview, "visible_child_fake")
 			self.PlaylistsOverview.bind_property("folded", self.backButtonPlaylistsOverview, "visible")
 			self.backButtonPlaylistsOverview.connect("clicked", self.onPlaylistOverviewBackButtonClicked)
+			self.PlaylistTracksList.connect("row-activated", self.onPlaylistTracksListRowActivated)
 			self.BackButtonBox.show_all()
 
 		def initLists():

@@ -40,15 +40,15 @@ class Spotify:
 		cache_path_dir = XDG_CACHE_HOME / Config.applicationID
 		cache_path_dir.mkdir(parents=True, exist_ok=True)
 
-		scope = "playlist-read-private,playlist-read-collaborative"
+		scope = "user-read-playback-position,user-read-private,user-library-read,user-top-read,playlist-modify-public,playlist-modify-private,user-read-playback-state,user-read-currently-playing,user-read-recently-played,user-modify-playback-state,playlist-read-private,playlist-read-collaborative"
 
 		sp_oauth = SpotifyOAuth(
 				username = username,
 				client_id = clientID,
 				client_secret = clientSecret,
-			scope = scope,
-			cache_path =  cache_path_dir / 'auth_token',
-			redirect_uri = "http://127.0.0.1:8080"
+				scope = scope,
+				cache_path =  cache_path_dir / 'auth_token',
+				redirect_uri = "http://127.0.0.1:8080"
 			)
 
 		self.sp = spotipy.Spotify(auth_manager=sp_oauth)

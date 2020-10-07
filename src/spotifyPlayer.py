@@ -15,8 +15,13 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+from .spotify import Spotify as sp
 
 class SpotifyPlayer:
 
 	def playNthElementInPlaylist(self, n, playlistUri):
-
+		try:
+			sp.get().start_playback(context_uri=playlistUri,
+					offset=n)
+		except Exception as e:
+			print(e)
