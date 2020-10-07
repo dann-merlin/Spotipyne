@@ -1,0 +1,3 @@
+A Playlist with multiple Songs of the same album tries to download it mutliple times to the same file. Not good.
+
+Fix huge playlists

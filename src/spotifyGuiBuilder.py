@@ -9,7 +9,7 @@ import spotipy
 from spotipy.oauth2 import SpotifyOAuth
 
 import gi
-from gi.repository import Gtk, GdkPixbuf, GLib, GObject
+from gi.repository import Gtk, GdkPixbuf, GLib, GObject, Pango
 
 from .config import Config
 from .coverArtLoader import CoverArtLoader
@@ -63,11 +63,11 @@ class SpotifyGuiBuilder:
 		try:
 			imageUrl = track['album']['images'][0]['url']
 			coverArt = self.coverArtLoader.getLoadingImage()
-			hbox.pack_start(coverArt, False, True, 0)
+			hbox.pack_start(coverArt, False, True, 5)
 			self.coverArtLoader.asyncUpdateAlbumCover(hbox, coverArt, url=imageUrl, ID=track['album']['id'])
 		except IndexError:
 			coverArt = self.coverArtLoader.getErrorImage()
-			hbox.pack_start(coverArt, False, True, 0)
+			hbox.pack_start(coverArt, False, True, 5)
 			print("Failed retrieveing the imageUrl for the track: " + str(track))
 		trackNameString = track['name']
 		artistString = reduce(lambda a, b: {'name': a['name'] + ", " + b['name']},
@@ -76,6 +76,9 @@ class SpotifyGuiBuilder:
 					)['name']
 		trackLabelString = '<b>' + GLib.markup_escape_text(trackNameString) + '</b>' + '\n' + GLib.markup_escape_text(artistString)
 		trackLabel = Gtk.Label(xalign=0)
+		trackLabel.set_max_width_chars(64)
+		trackLabel.set_line_wrap(True)
+		trackLabel.set_line_wrap_mode(Pango.WrapMode.WORD_CHAR);
 		trackLabel.set_markup(trackLabelString)
 		hbox.pack_end(trackLabel, True, True, 0)
 		row.add(hbox)
@@ -88,7 +91,9 @@ class SpotifyGuiBuilder:
 
 	def asyncLoadPlaylistTracks(self, tracksList, playlistID):
 		if self.currentPlaylistID == playlistID:
+			self.window.TracksListResumeEvent.set()
 			return
+		self.currentPlaylistID = playlistID
 
 		self.clearList(tracksList)
 
@@ -113,15 +118,20 @@ class SpotifyGuiBuilder:
 
 			def addAllTrackEntries():
 				try:
+					counter = 0
 					for track in allTracks:
 						if self.window.TracksListStopEvent.is_set():
 							break
-						addTrackEntry(track)
-					tracksList.show_all()
+						GLib.idle_add(addTrackEntry, track)
+						counter += 1
+						if counter == 10:
+							GLib.idle_add(tracksList.show_all)
+						counter %= 10
+						GLib.idle_add(tracksList.show_all)
 				finally:
 					self.window.TracksListResumeEvent.set()
 
-			GLib.idle_add(addAllTrackEntries)
+			addAllTrackEntries()
 
 		thread = threading.Thread(target=loadPlaylistTracks)
 		thread.start()
@@ -130,12 +140,14 @@ class SpotifyGuiBuilder:
 		def addPlaylistEntry(playlist):
 			row = PlaylistsListRow(playlist['id'])
 			hbox = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL)
-			# TODO async load coverArt
 			imageUrl = playlist['images'][0]['url']
 			coverArt = self.coverArtLoader.getLoadingImage()
-			hbox.pack_start(coverArt, False, True, 0)
+			hbox.pack_start(coverArt, False, True, 5)
 			self.coverArtLoader.asyncUpdatePlaylistCover(hbox, coverArt, url=imageUrl, ID=playlist['id'])
 			nameLabel = Gtk.Label(playlist['name'], xalign=0)
+			nameLabel.set_max_width_chars(32)
+			nameLabel.set_line_wrap(True)
+			nameLabel.set_line_wrap_mode(Pango.WrapMode.WORD_CHAR);
 			hbox.pack_end(nameLabel, True, True, 0)
 			row.add(hbox)
 			self.window.PlaylistsList.add(row)

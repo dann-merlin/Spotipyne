@@ -22,62 +22,77 @@ gi.require_version('Handy', '1')
 from gi.repository import Gtk, Handy
 
 from .spotifyGuiBuilder import SpotifyGuiBuilder
+from .backButton import BackButton
 
+def static_vars(**kwargs):
+	def decorate(func):
+		for k in kwargs:
+			setattr(func, k, kwargs[k])
+		return func
+	return decorate
 
 @Gtk.Template(resource_path='/xyz/merlinx/Spotipyne/window.ui')
 class SpotipyneWindow(Handy.ApplicationWindow):
 	__gtype_name__ = 'SpotipyneWindow'
 
 	Handy.init()
-	# squeezer = Gtk.Template.Child()
 	HeaderbarSwitcher = Gtk.Template.Child()
 	BottomSwitcher = Gtk.Template.Child()
 	MainStack = Gtk.Template.Child()
 	PlaylistsOverview = Gtk.Template.Child()
+	Playlists = Gtk.Template.Child()
 	PlaylistsList = Gtk.Template.Child()
 	PlaylistTracks = Gtk.Template.Child()
 	PlaylistTracksList = Gtk.Template.Child()
-	BackButton = Gtk.Template.Child()
+	BackButtonBox = Gtk.Template.Child()
+	backButtonPlaylistsOverview = BackButton()
 	Revealer = Gtk.Template.Child()
 	RevealButton = Gtk.Template.Child()
 
-	# def on_headerbar_squeezer_notify(self, squeezer, event):
-	# 	child = squeezer.get_visible_child()
-	# 	self.bottom_switcher.set_reveal(child != self.headerbar_switcher)
+	def onPlaylistOverviewBackButtonClicked(self, button):
+		self.PlaylistsOverview.set_visible_child_name("0")
 
-	def getCurrentOverview(self):
-		return self.MainStack.get_visible_child()
+	def onPlaylistTracksListRowActivated(self, PlaylistTracksList, TrackRow):
+		index = 0
+		try:
+			index = PlaylistTracksList.index(TrackRow)
+		except ValueError as e:
+			print(e)
+			return
+		# playlistUri = PlaylistTbV
 
-	def showBackButtonIfApplicable(self, leaflet, childNumber, switchTime):
-		if childNumber == 1:
-			self.BackButton.show()
 
-	def actionBackButton(self, button):
-		button.hide()
-		self.getCurrentOverview().set_visible_child_name("0")
-		self.spGUI.loadPlaylistTracksList(PlaylistTracksList, None)
-
-	def onPlaylistActivated(self, PlaylistsList, PlaylistRow):
+	def onPlaylistsListRowActivated(self, PlaylistsList, PlaylistRow):
 		self.TracksListStopEvent.set()
-
 		self.TracksListResumeEvent.wait()
 		self.TracksListResumeEvent.clear()
 		self.TracksListStopEvent.clear()
 		self.spGUI.asyncLoadPlaylistTracks(self.PlaylistTracksList, PlaylistRow.getPlaylistID())
+		self.PlaylistsOverview.set_visible_child_name("1")
 
 	def toggleReveal(self, button):
 		self.Revealer.set_reveal_child( not self.Revealer.get_reveal_child())
 
+	def playlist_tracks_focused(self):
+		return self.PlaylistsOverview.get_visible_child() == self.PlaylistTracks
+
 	def __init__(self, **kwargs):
 		super().__init__(**kwargs)
-
+		self.backButtonPlaylistsOverview.set_property("active", False)
+		self.BackButtonBox.remove(self.BackButtonBox.get_children()[0])
+		self.backButtonPlaylistsOverview.visible_child_add_activation_widget(self.PlaylistTracks)
+		self.backButtonPlaylistsOverview.visible_child_add_deactivation_widget(self.Playlists)
+		self.backButtonPlaylistsOverview.addRequirement(self.playlist_tracks_focused)
+		self.BackButtonBox.add(self.backButtonPlaylistsOverview)
+		self.BackButtonBox.show_all()
 		self.TracksListStopEvent = threading.Event()
 		self.TracksListResumeEvent = threading.Event()
 		self.TracksListResumeEvent.set()
 		self.spGUI = SpotifyGuiBuilder(window=self)
-		self.PlaylistsList.connect("row-activated", self.onPlaylistActivated)
+		self.PlaylistsList.connect("row-activated", self.onPlaylistsListRowActivated)
+		self.PlaylistsOverview.bind_property("folded", self.backButtonPlaylistsOverview, "active")
+		self.PlaylistsOverview.bind_property("visible-child", self.backButtonPlaylistsOverview, "visible_child_fake")
+		self.PlaylistsOverview.bind_property("folded", self.backButtonPlaylistsOverview, "visible")
+		self.backButtonPlaylistsOverview.connect("clicked", self.onPlaylistOverviewBackButtonClicked)
 		self.RevealButton.connect("clicked", self.toggleReveal)
-		# self.BackButton.connect("clicked", self.actionBackButton)
-		# self.BackButton.hide()
-		self.PlaylistsOverview.connect("child-switched", self.showBackButtonIfApplicable)
 		self.PlaylistsList.show_all()

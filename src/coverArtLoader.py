@@ -1,5 +1,6 @@
 # add xdg to flatpak
 import threading
+import os
 from xdg import XDG_CACHE_HOME
 
 import requests
@@ -16,10 +17,10 @@ class CoverArtLoader:
 
 
 	def getLoadingImage(self):
-		return Gtk.Image.new_from_pixbuf(self.icon_theme.load_icon("image-loading", self.imageSize, Gtk.IconLookupFlags.FORCE_SYMBOLIC))
+		return Gtk.Image.new_from_icon_name("image-loading-symbolic.symbolic", Gtk.IconSize.DIALOG)
 
 	def getErrorImage(self):
-		return Gtk.Image.new_from_pixbuf(self.icon_theme.load_icon("image-missing", self.imageSize, Gtk.IconLookupFlags.FORCE_SYMBOLIC))
+		return Gtk.Image.new_from_icon_name("image-missing-symbolic.symbolic", Gtk.IconSize.DIALOG)
 
 	def downloadToFile(self, url, toFile):
 		response = requests.get(url)
@@ -34,7 +35,11 @@ class CoverArtLoader:
 		return pixbuf.new_subpixbuf(src_x, src_y, smallerValue, smallerValue)
 
 	def loadImage(self, path, width, height):
-		pixbuf = GdkPixbuf.Pixbuf.new_from_file_at_size(filename=str(path), width=width, height=height)
+		try:
+			pixbuf = GdkPixbuf.Pixbuf.new_from_file_at_size(filename=str(path), width=width, height=height)
+		except GLib.Error:
+			os.remove(path)
+			return self.getErrorImage()
 
 		buf_height = pixbuf.get_height()
 		buf_width = pixbuf.get_width()
@@ -70,7 +75,7 @@ class CoverArtLoader:
 	def asyncUpdateCover(self, coverType, parent, updateMe, ID, url):
 		def updateInParent(newChild):
 			parent.remove(updateMe)
-			parent.pack_start(newChild, False, True, 0)
+			parent.pack_start(newChild, False, True, 5)
 			parent.show_all()
 
 		def tryReloadOrFail():
