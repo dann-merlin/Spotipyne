@@ -24,6 +24,7 @@ from gi.repository import Gtk, Handy
 from .spotifyGuiBuilder import SpotifyGuiBuilder
 from .spotify import Spotify as sp
 from .backButton import BackButton
+from .simpleControls import SimpleControls
 
 def static_vars(**kwargs):
 	def decorate(func):
@@ -47,6 +48,7 @@ class SpotipyneWindow(Handy.ApplicationWindow):
 	PlaylistTracksList = Gtk.Template.Child()
 	BackButtonBox = Gtk.Template.Child()
 	backButtonPlaylistsOverview = BackButton()
+	SimpleControlsParent = Gtk.Template.Child()
 	Revealer = Gtk.Template.Child()
 	RevealButton = Gtk.Template.Child()
 
@@ -74,20 +76,18 @@ class SpotipyneWindow(Handy.ApplicationWindow):
 	def playlist_tracks_focused(self):
 		return self.PlaylistsOverview.get_visible_child() == self.PlaylistTracks
 
-	def initializePlaylistsOverview(self):
+	def initPlaylistsOverview(self):
 		def initBackButton():
-			self.backButtonPlaylistsOverview.set_property("active", False)
 			self.BackButtonBox.remove(self.BackButtonBox.get_children()[0])
 			self.backButtonPlaylistsOverview.visible_child_add_activation_widget(self.PlaylistTracks)
 			self.backButtonPlaylistsOverview.visible_child_add_deactivation_widget(self.Playlists)
 			self.backButtonPlaylistsOverview.addRequirement(self.playlist_tracks_focused)
 			self.BackButtonBox.add(self.backButtonPlaylistsOverview)
-			# self.PlaylistsOverview.bind_property("folded", self.backButtonPlaylistsOverview, "active")
 			self.PlaylistsOverview.bind_property("visible-child", self.backButtonPlaylistsOverview, "visible_child_fake")
 			self.PlaylistsOverview.bind_property("folded", self.backButtonPlaylistsOverview, "visible")
 			self.backButtonPlaylistsOverview.connect("clicked", self.onPlaylistOverviewBackButtonClicked)
 			self.PlaylistTracksList.connect("row-activated", self.onPlaylistTracksListRowActivated)
-			self.BackButtonBox.show_all()
+			self.backButtonPlaylistsOverview.set_property("active", self.PlaylistsOverview.get_folded())
 
 		def initLists():
 			self.TracksListStopEvent = threading.Event()
@@ -97,12 +97,18 @@ class SpotipyneWindow(Handy.ApplicationWindow):
 			self.spGUI = SpotifyGuiBuilder()
 			self.spGUI.asyncLoadPlaylists(self.PlaylistsList)
 
-		initBackButton()
 		initLists()
+		initBackButton()
+
+	def initSimpleControls(self):
+		self.simpleControls = SimpleControls(self.SimpleControlsParent)
+		self.simpleControls.revealed = True
 
 	def __init__(self, **kwargs):
 		super().__init__(**kwargs)
 
-		self.initializePlaylistsOverview()
+		self.initPlaylistsOverview()
+
+		self.initSimpleControls()
 
 		self.RevealButton.connect("clicked", self.toggleReveal)

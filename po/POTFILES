@@ -2,6 +2,7 @@ data/xyz.merlinx.Spotipyne.desktop.in
 data/xyz.merlinx.Spotipyne.appdata.xml.in
 data/xyz.merlinx.Spotipyne.gschema.xml
 src/window.ui
+src/simpleControls.ui
 src/main.py
 src/window.py
 
