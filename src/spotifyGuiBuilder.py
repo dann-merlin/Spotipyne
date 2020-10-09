@@ -52,7 +52,6 @@ class PlaylistsListRow(Gtk.ListBoxRow):
 class SpotifyGuiBuilder:
 
 	def __init__(self):
-
 		self.coverArtLoader = CoverArtLoader()
 		self.currentPlaylistID = ''
 
@@ -64,7 +63,7 @@ class SpotifyGuiBuilder:
 			imageUrl = track['album']['images'][0]['url']
 			coverArt = self.coverArtLoader.getLoadingImage()
 			hbox.pack_start(coverArt, False, True, 5)
-			self.coverArtLoader.asyncUpdateAlbumCover(hbox, coverArt, url=imageUrl, ID=track['album']['id'])
+			self.coverArtLoader.asyncUpdateCover(hbox, coverArt, url=imageUrl, uri=track['album']['uri'])
 		except IndexError:
 			coverArt = self.coverArtLoader.getErrorImage()
 			hbox.pack_start(coverArt, False, True, 5)
@@ -112,7 +111,7 @@ class SpotifyGuiBuilder:
 			while keepGoing:
 				tracksResponse = sp.get().playlist_tracks(
 					playlist_id=playlistID,
-					fields='items(track(uri,id,name,artists(name),album(id,images))),next',
+					fields='items(track(uri,id,name,artists(name),album(id,uri,images))),next',
 					limit=pageSize,
 					offset=offset)
 				keepGoing = tracksResponse['next'] != None
@@ -120,15 +119,16 @@ class SpotifyGuiBuilder:
 				allTracks += tracksResponse['items']
 
 			def addAllTrackEntries():
-				def chunks(l):
-					n = 10
+				def chunks(l, n):
 					for i in range(0, len(l), n):
 						yield l[i:i+n]
 				try:
-					for trackChunk in chunks(allTracks):
-						if stopEvent.is_set():
-							break
-						GLib.idle_add(addTrackEntries, trackChunk)
+					for hugeChunk in chunks(allTracks, 100):
+						for trackChunk in chunks(hugeChunk, 10):
+							if stopEvent.is_set():
+								break
+							GLib.idle_add(addTrackEntries, trackChunk)
+						time.sleep(1)
 				finally:
 					resumeEvent.set()
 
@@ -145,7 +145,7 @@ class SpotifyGuiBuilder:
 			imageUrl = playlist['images'][0]['url']
 			coverArt = self.coverArtLoader.getLoadingImage()
 			hbox.pack_start(coverArt, False, True, 5)
-			self.coverArtLoader.asyncUpdatePlaylistCover(hbox, coverArt, url=imageUrl, ID=playlist['id'])
+			self.coverArtLoader.asyncUpdateCover(hbox, coverArt, url=imageUrl, uri=playlist['uri'])
 			nameLabel = Gtk.Label(playlist['name'], xalign=0)
 			nameLabel.set_max_width_chars(32)
 			nameLabel.set_line_wrap(True)

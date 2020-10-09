@@ -68,21 +68,18 @@ class CoverArtLoader:
 
 		return pixbuf
 
-	def getCoverPath(self, coverType, ID):
-		possibleTypes = [ 'playlist', 'album' ]
-		if coverType not in possibleTypes:
-			coverType = 'ERRORTypeDoesNotExist'
-		playlistCachePath = BaseDirectory.save_cache_path(Config.applicationID + 'coverArt' + coverType)
-		playlistCachePath += ID
+	def getCoverPath(self, uri):
+		playlistCachePath = BaseDirectory.save_cache_path(Config.applicationID + 'coverArt')
+		playlistCachePath += uri
 		return playlistCachePath
 
-	def loadCoverFromCache(self, coverType, ID):
-		cachePath = self.getCoverPath(coverType, ID)
+	def loadCoverFromCache(self, uri):
+		cachePath = self.getCoverPath(uri)
 		if os.path.isfile(cachePath):
 			return self.loadImage(path=cachePath, width=self.imageSize, height=self.imageSize)
 		return None
 
-	def asyncUpdateCover(self, coverType, parent, updateMe, ID, url):
+	def asyncUpdateCover(self, parent, updateMe, uri, url):
 
 		# GTK
 		def updateInParent(image):
@@ -98,7 +95,7 @@ class CoverArtLoader:
 			GLib.idle_add(priority=GLib.PRIORITY_LOW, function=toImage)
 
 		def tryReloadOrFail():
-			newCover = self.loadCoverFromCache(coverType=coverType, ID=ID)
+			newCover = self.loadCoverFromCache(uri=uri)
 			if not newCover:
 				# GTK
 				def fail():
@@ -108,20 +105,14 @@ class CoverArtLoader:
 				updateInParent_pixbuf(newCover)
 
 		def updateCover():
-			self.downloadToFile(url=url, toFile=self.getCoverPath(coverType, ID))
+			self.downloadToFile(url=url, toFile=self.getCoverPath(uri))
 			tryReloadOrFail()
 
 		def tryCacheFirst():
-			newCover = self.loadCoverFromCache(coverType=coverType, ID=ID)
+			newCover = self.loadCoverFromCache(uri=uri)
 			if not newCover:
 				updateCover()
 			else:
 				updateInParent_pixbuf(newCover)
 		thread = threading.Thread(target=tryCacheFirst)
 		thread.start()
-
-	def asyncUpdatePlaylistCover(self, parent, updateMe, ID, url):
-		self.asyncUpdateCover('playlist', parent, updateMe, ID, url)
-
-	def asyncUpdateAlbumCover(self, parent, updateMe, ID, url):
-		self.asyncUpdateCover('album', parent, updateMe, ID, url)
