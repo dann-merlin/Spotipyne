@@ -19,7 +19,7 @@ from .config import Config
 import os
 import sys
 import threading
-from xdg import XDG_CACHE_HOME
+from xdg import BaseDirectory
 
 import spotipy
 from spotipy.oauth2 import SpotifyOAuth
@@ -37,17 +37,19 @@ class Spotify:
 		clientID = os.getenv("SPOTIPY_CLIENT_ID",  "72d3a0443ae547db8e6471841f0ac6d7")
 		clientSecret = os.getenv("SPOTIPY_CLIENT_SECRET", "ac0ed069a1f4470c9068690a19b5960e")
 
-		cache_path_dir = XDG_CACHE_HOME / Config.applicationID
-		cache_path_dir.mkdir(parents=True, exist_ok=True)
+		cache_path = BaseDirectory.save_cache_path(Config.applicationID)
 
 		scope = "user-read-playback-position,user-read-private,user-library-read,user-top-read,playlist-modify-public,playlist-modify-private,user-read-playback-state,user-read-currently-playing,user-read-recently-played,user-modify-playback-state,playlist-read-private,playlist-read-collaborative"
+
+		cache_path += 'auth_token'
+		print("Saving the auth token in: " + cache_path)
 
 		sp_oauth = SpotifyOAuth(
 				username = username,
 				client_id = clientID,
 				client_secret = clientSecret,
 				scope = scope,
-				cache_path =  cache_path_dir / 'auth_token',
+				cache_path = cache_path,
 				redirect_uri = "http://127.0.0.1:8080"
 			)
 

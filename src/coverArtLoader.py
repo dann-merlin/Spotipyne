@@ -15,10 +15,9 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-# add xdg to flatpak
 import threading
 import os
-from xdg import XDG_CACHE_HOME
+from xdg import BaseDirectory
 
 import requests
 import gi
@@ -74,20 +73,15 @@ class CoverArtLoader:
 		possibleTypes = [ 'playlist', 'album' ]
 		if coverType not in possibleTypes:
 			coverType = 'ERRORTypeDoesNotExist'
-		playlistCachePathDir = XDG_CACHE_HOME / Config.applicationID / 'coverArt' / coverType
-		playlistCachePathDir.mkdir(parents=True, exist_ok=True)
-		playlistCachePath = playlistCachePathDir / ID
+		playlistCachePath = BaseDirectory.save_cache_path(Config.applicationID + 'coverArt' + coverType)
+		playlistCachePath += ID
 		return playlistCachePath
 
 	def loadCoverFromCache(self, coverType, ID):
 		cachePath = self.getCoverPath(coverType, ID)
-		if cachePath.is_file():
+		if os.path.isfile(cachePath):
 			return self.loadImage(path=cachePath, width=self.imageSize, height=self.imageSize)
 		return None
-
-	# def loadCoverFromDownload(self, url, coverType, ID):
-	# 	self.downloadToFile(url=url, toFile=self.getCoverPath(coverType, ID))
-	# 	return self.loadCoverFromCache(coverType, ID)
 
 	def asyncUpdateCover(self, coverType, parent, updateMe, ID, url):
 		def updateInParent(newChild):

@@ -3,3 +3,7 @@ A Playlist with multiple Songs of the same album tries to download it mutliple t
 Fix huge playlists
 
 fix some covers aren't found (probably because of markets)
+
+error when spotify auth failed
+
+do spotify auth via interface

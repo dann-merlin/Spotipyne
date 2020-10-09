@@ -20,8 +20,6 @@ import threading
 
 from functools import reduce
 
-from xdg import XDG_CACHE_HOME
-
 import gi
 from gi.repository import Gtk, GdkPixbuf, GLib, GObject, Pango
 
