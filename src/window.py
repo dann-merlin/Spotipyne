@@ -26,13 +26,6 @@ from .spotify import Spotify as sp
 from .backButton import BackButton
 from .simpleControls import SimpleControls
 
-def static_vars(**kwargs):
-	def decorate(func):
-		for k in kwargs:
-			setattr(func, k, kwargs[k])
-		return func
-	return decorate
-
 @Gtk.Template(resource_path='/xyz/merlinx/Spotipyne/window.ui')
 class SpotipyneWindow(Handy.ApplicationWindow):
 	__gtype_name__ = 'SpotipyneWindow'

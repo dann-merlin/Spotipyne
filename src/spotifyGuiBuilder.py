@@ -59,15 +59,14 @@ class SpotifyGuiBuilder:
 		track = trackResponse['track']
 		row = TrackListRow(track['id'], track['uri'])
 		hbox = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL)
+		imageUrl = None
 		try:
 			imageUrl = track['album']['images'][0]['url']
-			coverArt = self.coverArtLoader.getLoadingImage()
-			hbox.pack_start(coverArt, False, True, 5)
-			self.coverArtLoader.asyncUpdateCover(hbox, coverArt, url=imageUrl, uri=track['album']['uri'])
 		except IndexError:
-			coverArt = self.coverArtLoader.getErrorImage()
-			hbox.pack_start(coverArt, False, True, 5)
-			print("Failed retrieveing the imageUrl for the track: " + str(track))
+			pass
+		coverArt = self.coverArtLoader.getLoadingImage()
+		hbox.pack_start(coverArt, False, True, 5)
+		self.coverArtLoader.asyncUpdateCover(hbox, coverArt, url=imageUrl, uri=track['album']['uri'])
 		trackNameString = track['name']
 		artistString = reduce(lambda a, b: {'name': a['name'] + ", " + b['name']},
 					track['artists'][1:],
