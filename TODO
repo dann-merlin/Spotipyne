@@ -1,14 +1,7 @@
-A Playlist with multiple Songs of the same album tries to download it mutliple times to the same file. Not good.
-
-Fix huge playlists (maybe done?)
-
-fix some covers aren't found (probably because of markets)
+fix some covers aren't found (probably because of markets / actually no. I don't know)
 
 error when spotify auth failed
 
 do spotify auth via interface
 
-not only load images from cache, but from memory (pixbuf), if already loaded
-
-
-!!! I'm calling constructors of Gtk.Image etc. outside of the main thread. Stop this!
+huge playlists still a problem

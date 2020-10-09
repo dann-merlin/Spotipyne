@@ -62,23 +62,39 @@ def downloadToFile(url, toFile):
 	response = requests.get(url)
 	open(toFile, 'wb').write(response.content)
 
-# TODO - this is wrong
-# def make_square_of_size(pixbuf, size):
-# 	buf_height = pixbuf.get_height()
-# 	buf_width = pixbuf.get_width()
-# 	if buf_width != buf_height:
-# 		if buf_width > buf_height:
-# 			pixbuf = GdkPixbuf.Pixbuf.new_from_file_at_size(filename=str(path), width=-1, height=height)
-# 		else:
-# 			pixbuf = GdkPixbuf.Pixbuf.new_from_file_at_size(filename=str(path), width=width, height=-1)
-# 		pixbuf = self.cropToSquare(pixbuf)
-
-# 	return pixbuf
+def cropToSquare(pixbuf):
+	height = pixbuf.get_height()
+	width = pixbuf.get_width()
+	smallerValue = height if height < width else width
+	src_x = (width - smallerValue) // 2
+	src_y = (height - smallerValue) // 2
+	return pixbuf.new_subpixbuf(src_x, src_y, smallerValue, smallerValue)
 
 class Dimensions:
-	def __init__(self, width, height):
+
+	def __key(self):
+		return (self.width, self.height, self.be_square)
+
+	def __hash__(self):
+		return hash(self.__key())
+
+	def __eq__(self, other):
+		if isinstance(other, Dimensions):
+			return self.__key() == other.__key()
+		return NotImplemented
+
+	def __init__(self, width, height, be_square=False):
 		self.width = width
 		self.height = height
+		if be_square:
+			self.height = self.width
+		self.be_square = be_square
+
+def scaleToDimension(pixbuf, dim):
+	cropped = pixbuf
+	if dim.be_square:
+		cropped = cropToSquare(pixbuf)
+	return cropped.scale_simple(dim.width, dim.height, GdkPixbuf.InterpType.BILINEAR)
 
 class PixbufCache:
 
@@ -86,23 +102,44 @@ class PixbufCache:
 
 		def __init__(self):
 			self.entryLock = threading.Lock()
-			self.pixbuf = None
+			self.pixbuf_orig = None
+			self.pixbufs_scaled = {}
+			self.error = False
+
+		def __get_orig(self, uri, url=None):
+			cachePath = getCoverPath(uri)
+			if os.path.isfile(cachePath):
+				loaded = load_pixbuf_from_file(path=cachePath)
+				if loaded:
+					self.pixbufs_scaled[Dimensions(loaded.get_width(), loaded.get_height(), True)] = loaded
+					self.pixbufs_scaled[Dimensions(loaded.get_width(), loaded.get_height(), False)] = loaded
+					return loaded
+			if url:
+				downloadToFile(url, cachePath)
+				return self.__get_orig(uri, None)
+			return None
+
+		def get_scaled(self, uri, dim, url):
+			if self.error:
+				return None
+
+			if dim in self.pixbufs_scaled.keys():
+				return self.pixbufs_scaled[dim]
+
+			if not self.pixbuf_orig:
+				self.pixbuf_orig = self.__get_orig(uri, url)
+				if not self.pixbuf_orig:
+					self.error = True
+					return None
+
+			if dim not in self.pixbufs_scaled.keys():
+				self.pixbufs_scaled[dim] = scaleToDimension(self.pixbuf_orig, dim)
+			return self.pixbufs_scaled[dim]
+
 
 	def __init__(self):
 		self.__pixbufs_lock = threading.Lock()
 		self.__pixbufs = {}
-		errorImage = getErrorImage()
-		self.__errorPixbuf = errorImage.get_pixbuf()
-
-	def __fetch_pixbuf(self, uri, url=None):
-		cachePath = getCoverPath(uri)
-		if os.path.isfile(cachePath):
-			loaded = load_pixbuf_from_file(path=cachePath)
-			return self.__errorPixbuf if loaded is None else loaded
-		if url:
-			downloadToFile(url, cachePath)
-			self.__fetch_pixbuf(uri, None)
-		return self.__errorPixbuf
 
 	def get_pixbuf(self, uri, dimensions, url):
 		pixbufEntry = None
@@ -112,9 +149,7 @@ class PixbufCache:
 			pixbufEntry = self.__pixbufs[uri]
 
 		with pixbufEntry.entryLock:
-			if not pixbufEntry.pixbuf:
-				pixbufEntry.pixbuf = self.__fetch_pixbuf(uri, url)
-			return pixbufEntry.pixbuf # TODO scale before return
+			return pixbufEntry.get_scaled(uri, dimensions, url)
 
 class CoverArtLoader:
 
@@ -126,14 +161,6 @@ class CoverArtLoader:
 	def getLoadingImage(self):
 		return Gtk.Image.new_from_icon_name("image-loading-symbolic.symbolic", Gtk.IconSize.DIALOG)
 
-	# def cropToSquare(self, pixbuf):
-	# 	height = pixbuf.get_height()
-	# 	width = pixbuf.get_width()
-	# 	smallerValue = height if height < width else width
-	# 	src_x = (width - smallerValue) // 2
-	# 	src_y = (height - smallerValue) // 2
-	# 	return pixbuf.new_subpixbuf(src_x, src_y, smallerValue, smallerValue)
-
 	def asyncUpdateCover(self, parent, updateMe, uri, url):
 
 		# GTK
@@ -143,35 +170,24 @@ class CoverArtLoader:
 			parent.show_all()
 
 		def updateInParent_pixbuf(newChild):
-
 			# GTK
 			def toImage():
 				updateInParent(Gtk.Image.new_from_pixbuf(newChild))
 			GLib.idle_add(priority=GLib.PRIORITY_LOW, function=toImage)
 
-		# def tryReloadOrFail():
-		# 	newCover = self.loadCoverFromCache(uri=uri)
-		# 	if not newCover:
-		# 		# GTK
-		# 		def fail():
-		# 			updateInParent(getErrorImage())
-		# 		GLib.idle_add(priority=GLib.PRIORITY_LOW, function=fail)
-		# 	else:
-		# 		updateInParent_pixbuf(newCover)
+		def updateInParent_error():
+			# GTK
+			def errorImage():
+				updateInParent(getErrorImage())
+			GLib.idle_add(priority=GLib.PRIORITY_LOW, function=errorImage)
 
-		# def updateCover():
-		# 	self.downloadToFile(url=url, toFile=self.getCoverPath(uri))
-		# 	tryReloadOrFail()
-
-		# def tryCacheFirst():
-		# 	newCover = self.loadCoverFromCache(uri=uri)
-		# 	if not newCover:
-		# 		updateCover()
-		# 	else:
-		# 		updateInParent_pixbuf(newCover)
 		def getPixbufAndUpdate():
-			dim = Dimensions(60, 60)
+			dim = Dimensions(60, 60, True)
 			pixbuf = self.pixbuf_cache.get_pixbuf(uri=uri, dimensions=dim, url=url)
-			updateInParent_pixbuf(pixbuf)
+			if pixbuf:
+				updateInParent_pixbuf(pixbuf)
+			else:
+				updateInParent_error()
+
 		thread = threading.Thread(target=getPixbufAndUpdate)
 		thread.start()
