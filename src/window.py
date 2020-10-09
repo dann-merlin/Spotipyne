@@ -111,4 +111,6 @@ class SpotipyneWindow(Handy.ApplicationWindow):
 
 		self.initSimpleControls()
 
+		self.HeaderbarSwitcher.bind_property("title-visible", self.BottomSwitcher, "reveal")
+
 		self.RevealButton.connect("clicked", self.toggleReveal)

@@ -29,12 +29,12 @@ class CoverArtLoader:
 
 	def __init__(self):
 		self.imageSize = 60
-		self.icon_theme = Gtk.IconTheme.get_default()
 
-
+	# GTK
 	def getLoadingImage(self):
 		return Gtk.Image.new_from_icon_name("image-loading-symbolic.symbolic", Gtk.IconSize.DIALOG)
 
+	# GTK
 	def getErrorImage(self):
 		return Gtk.Image.new_from_icon_name("image-missing-symbolic.symbolic", Gtk.IconSize.DIALOG)
 
@@ -66,8 +66,7 @@ class CoverArtLoader:
 				pixbuf = GdkPixbuf.Pixbuf.new_from_file_at_size(filename=str(path), width=width, height=-1)
 			pixbuf = self.cropToSquare(pixbuf)
 
-		image = Gtk.Image.new_from_pixbuf(pixbuf)
-		return image
+		return pixbuf
 
 	def getCoverPath(self, coverType, ID):
 		possibleTypes = [ 'playlist', 'album' ]
@@ -84,27 +83,42 @@ class CoverArtLoader:
 		return None
 
 	def asyncUpdateCover(self, coverType, parent, updateMe, ID, url):
-		def updateInParent(newChild):
+
+		# GTK
+		def updateInParent(image):
 			parent.remove(updateMe)
-			parent.pack_start(newChild, False, True, 5)
+			parent.pack_start(image, False, True, 5)
 			parent.show_all()
+
+		def updateInParent_pixbuf(newChild):
+
+			# GTK
+			def toImage():
+				updateInParent(Gtk.Image.new_from_pixbuf(newChild))
+			GLib.idle_add(priority=GLib.PRIORITY_LOW, function=toImage)
 
 		def tryReloadOrFail():
 			newCover = self.loadCoverFromCache(coverType=coverType, ID=ID)
 			if not newCover:
-				newCover = self.getErrorImage()
-			updateInParent(newCover)
+				# GTK
+				def fail():
+					updateInParent(self.getErrorImage())
+				GLib.idle_add(priority=GLib.PRIORITY_LOW, function=fail)
+			else:
+				updateInParent_pixbuf(newCover)
 
 		def updateCover():
 			self.downloadToFile(url=url, toFile=self.getCoverPath(coverType, ID))
-			GLib.idle_add(tryReloadOrFail)
+			tryReloadOrFail()
 
-		newCover = self.loadCoverFromCache(coverType=coverType, ID=ID)
-		if not newCover:
-			thread = threading.Thread(target=updateCover)
-			thread.start()
-		else:
-			updateInParent(newCover)
+		def tryCacheFirst():
+			newCover = self.loadCoverFromCache(coverType=coverType, ID=ID)
+			if not newCover:
+				updateCover()
+			else:
+				updateInParent_pixbuf(newCover)
+		thread = threading.Thread(target=tryCacheFirst)
+		thread.start()
 
 	def asyncUpdatePlaylistCover(self, parent, updateMe, ID, url):
 		self.asyncUpdateCover('playlist', parent, updateMe, ID, url)

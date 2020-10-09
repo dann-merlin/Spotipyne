@@ -98,9 +98,11 @@ class SpotifyGuiBuilder:
 		self.clearList(tracksList)
 
 		# TODO use insert
-		def addTrackEntry(track):
-			trackEntry = self.buildTrackEntry(track)
-			tracksList.add(trackEntry)
+		def addTrackEntries(tracks):
+			for track in tracks:
+				trackEntry = self.buildTrackEntry(track)
+				tracksList.add(trackEntry)
+			tracksList.show_all()
 
 		def loadPlaylistTracks():
 			allTracks = []
@@ -118,17 +120,15 @@ class SpotifyGuiBuilder:
 				allTracks += tracksResponse['items']
 
 			def addAllTrackEntries():
+				def chunks(l):
+					n = 10
+					for i in range(0, len(l), n):
+						yield l[i:i+n]
 				try:
-					counter = 0
-					for track in allTracks:
+					for trackChunk in chunks(allTracks):
 						if stopEvent.is_set():
 							break
-						GLib.idle_add(addTrackEntry, track)
-						counter += 1
-						if counter == 10:
-							GLib.idle_add(tracksList.show_all)
-						counter %= 10
-						GLib.idle_add(tracksList.show_all)
+						GLib.idle_add(addTrackEntries, trackChunk)
 				finally:
 					resumeEvent.set()
 
