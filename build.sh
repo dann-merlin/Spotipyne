@@ -35,9 +35,13 @@ as_bin() {
 	check_installed_bin "ninja"
 	check_installed_bin "gettext"
 	check_installed_lib "libhandy-1"
+	check_installed_bin "python3"
+	check_installed_bin "pip3"
+	pip3 install -r requirements.txt
 
 	meson "${dir}/build" "${dir}" && \
-	ninja -C "${dir}/build"
+	ninja -C "${dir}/build" && \
+	echo "Almost done! To install just type: ninja -C \""${dir}/build"\" install"
 }
 
 as_bin
