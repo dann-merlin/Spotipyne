@@ -32,17 +32,18 @@ class SimpleControls(Gtk.Revealer):
 			super().__init__(**kwargs)
 			self.pb = spotifyPlayback
 			self.pb.connect("is_playing_changed", self.updateLabel)
-			self.set_label("Unknown")
 			self.connect("clicked", self.on_clicked)
 			self.show()
+			self.playing_image = Gtk.Image.new_from_icon_name("media-playback-pause", Gtk.IconSize.DIALOG)
+			self.paused_image = Gtk.Image.new_from_icon_name("media-playback-start", Gtk.IconSize.DIALOG)
 
 		def updateLabel(self, spotifyPlayback, is_playing):
 			self.__is_playing = is_playing
 			def to_main_thread():
 				if is_playing:
-					self.set_label("playing")
+					self.set_image(self.playing_image)
 				else:
-					self.set_label("paused")
+					self.set_image(self.paused_image)
 			GLib.idle_add(to_main_thread)
 
 		def on_clicked(self, _):
@@ -85,19 +86,29 @@ class SimpleControls(Gtk.Revealer):
 
 	def __init__(self, spotifyPlayback, **kwargs):
 		super().__init__(**kwargs)
-		self.__is_playing = False
 		self.progressbar = self.SimpleProgressBar(spotifyPlayback)
 		self.progressbar_box.pack_start(self.progressbar, False, True, 0)
 		self.progressbar_box.reorder_child(self.progressbar, 0)
-		self.mainbox.pack_start(self.PlaybackButton(spotifyPlayback), False, True, 0)
-		spotifyPlayback.bind_property("progress_fraction", self.progressbar, "fraction")
-		# self.progressbar.bind_property("fraction", spotifyPlayback, "progress_fraction")
-		self.show_all()
-		# testLabel = Gtk.Label("TEST")
-		# self.mainbox.pack_start(testLabel, False, True, 0)
-		# testLabel.show_all()
-		# self.progressbar_box.show_all()
 
-	@GObject.Property(type=bool, default=False)
-	def is_playing(self):
-		return self.__is_playing
+		self.coverArt = Gtk.Image()
+		self.mainbox.pack_start(self.coverArt, False, True, 0)
+
+		self.songLabel = Gtk.Label()
+		self.songLabel.set_line_wrap(False)
+		self.mainbox.pack_start(self.songLabel, False, True, 0)
+
+		spotifyPlayback.connect("track_changed", self.on_track_changed)
+
+		self.mainbox.pack_end(self.PlaybackButton(spotifyPlayback), False, True, 0)
+		spotifyPlayback.bind_property("progress_fraction", self.progressbar, "fraction")
+		self.show_all()
+
+	def updateSongLabel(self, spotifyPlayback):
+		label_string = '<b>' + GLib.markup_escape_text(spotifyPlayback.get_track_name()) + '</b>'
+		label_string += '\n'
+		label_string += GLib.markup_escape_text(spotifyPlayback.get_artist_names())
+		self.songLabel.set_markup(label_string)
+
+	def on_track_changed(self, spotifyPlayback, track_uri):
+		spotifyPlayback.set_current_cover_art(self.coverArt)
+		self.updateSongLabel(spotifyPlayback)

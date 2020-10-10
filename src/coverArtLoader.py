@@ -163,13 +163,6 @@ class CoverArtLoader:
 
 	def asyncUpdateCover(self, updateMe, uri, url):
 
-		# GTK
-		# def updateInParent(image):
-		# 	parent.remove(updateMe)
-		# 	parent.pack_start(image, False, True, 5)
-		# 	parent.reorder_child(image, position)
-		# 	parent.show_all()
-
 		def updateInParent_pixbuf(newChild):
 			# GTK
 			def toImage():

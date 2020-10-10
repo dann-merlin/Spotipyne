@@ -18,12 +18,16 @@
 import time
 import threading
 
+from functools import reduce
+
 from gi.repository import GObject
 
 from .spotify import Spotify as sp
 
 class SpotifyPlayback(GObject.Object):
 	__gtype_name__ = "SpotifyPlayback"
+
+	SLEEP_TIME = 1
 
 	def __init__(self, coverArtLoader, **kwargs):
 		super().__init__(**kwargs)
@@ -36,6 +40,8 @@ class SpotifyPlayback(GObject.Object):
 
 	def keepUpdating(self):
 		self.track_uri = ""
+		self.track_name = ""
+		self.artists = ""
 		self.coverUrl = ""
 		is_playing = None
 		while True:
@@ -54,9 +60,16 @@ class SpotifyPlayback(GObject.Object):
 
 				self.shuffle = pb['shuffle_state']
 
-				self.__progress_ms = pb['progress_ms']
+				self.progress_ms = pb['progress_ms']
 
 				if self.track_uri != pb['item']['uri']:
+					self.track_name = pb['item']['name']
+					self.artists = reduce(
+							lambda a, b:
+							{ 'name': a['name'] + ", " + b['name'] },
+							pb['item']['artists'][1:],
+							pb['item']['artists'][0]
+							)['name']
 					self.track_uri = pb['item']['uri']
 					self.duration_ms = pb['item']['duration_ms']
 					self.coverUrl = pb['item']['album']['images'][0]['url']
@@ -64,32 +77,20 @@ class SpotifyPlayback(GObject.Object):
 				self.progress_fraction = self.progress_ms / self.duration_ms
 			except Exception as e:
 				print(e)
-			time.sleep(1)
+			time.sleep(self.SLEEP_TIME)
 
-	@GObject.Property(type=bool, default=False)
-	def shuffle(self):
-		return self.__shuffle
+	# @GObject.Property(type=int, default=0)
+	# def progress_ms(self):
+	# 	return self.__progress_ms
 
-	@shuffle.setter
-	def shuffle(self, new_shuffle):
-		# try:
-		# 	sp.get().shuffle(new_shuffle)
-		# except Exception as e:
-		# 	print(e)
-		self.__shuffle = new_shuffle
-
-	@GObject.Property(type=int, default=0)
-	def progress_ms(self):
-		return self.__progress_ms
-
-	@progress_ms.setter
-	def progress_ms(self, new_progress_ms):
-		try:
-			print("Seeking: " + str(new_progress_ms))
-			sp.get().seek_track(new_progress_ms)
-		except SpotifyException as e:
-			print(e)
-		self.__progress_ms = new_progress_ms
+	# @progress_ms.setter
+	# def progress_ms(self, new_progress_ms):
+	# 	try:
+	# 		print("Seeking: " + str(new_progress_ms))
+	# 		sp.get().seek_track(new_progress_ms)
+	# 	except SpotifyException as e:
+	# 		print(e)
+	# 	self.__progress_ms = new_progress_ms
 
 	@GObject.Property(type=float, default=0.0)
 	def progress_fraction(self):
@@ -107,5 +108,11 @@ class SpotifyPlayback(GObject.Object):
 	def track_changed(self, track_uri):
 		pass
 
-	def set_current_cover_art(self, image, ):
+	def set_current_cover_art(self, image):
 		self.coverArtLoader.asyncUpdateCover(image, self.track_uri, self.coverUrl)
+
+	def get_track_name(self):
+		return self.track_name
+
+	def get_artist_names(self):
+		return self.artists

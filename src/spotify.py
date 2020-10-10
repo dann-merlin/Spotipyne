@@ -41,7 +41,7 @@ class Spotify:
 
 		scope = "user-read-playback-position,user-read-private,user-library-read,user-top-read,playlist-modify-public,playlist-modify-private,user-read-playback-state,user-read-currently-playing,user-read-recently-played,user-modify-playback-state,playlist-read-private,playlist-read-collaborative"
 
-		cache_path += 'auth_token'
+		cache_path += '/' + 'auth_token'
 		print("Saving the auth token in: " + cache_path)
 
 		sp_oauth = SpotifyOAuth(
