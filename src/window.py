@@ -104,8 +104,7 @@ class SpotipyneWindow(Handy.ApplicationWindow):
 	def initSimpleControls(self):
 		self.simpleControls = SimpleControls(self.spotifyPlayback)
 		self.SimpleControlsParent.pack_start(self.simpleControls, False, True, 0)
-		self.simpleControls.set_reveal_child(True)
-		# self.simpleControls.revealed = True
+		self.simpleControls.set_reveal_child(False)
 
 	def __init__(self, **kwargs):
 		super().__init__(**kwargs)

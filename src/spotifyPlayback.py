@@ -34,6 +34,7 @@ class SpotifyPlayback(GObject.Object):
 		self.__shuffle = False
 		self.duration_ms = 1.0
 		self.coverArtLoader = coverArtLoader
+		self.has_playback = False
 
 		playbackUpdateThread = threading.Thread(target=self.keepUpdating, daemon=True)
 		playbackUpdateThread.start()
@@ -49,8 +50,15 @@ class SpotifyPlayback(GObject.Object):
 				pb = sp.get().current_playback()
 
 				if not pb:
+					if self.has_playback:
+						self.emit("has_playback", not self.has_playback)
 					time.sleep(5)
+					self.has_playback = False
 					continue
+				else:
+					if not self.has_playback:
+						self.emit("has_playback", not self.has_playback)
+					self.has_playback = True
 
 				if is_playing != pb['is_playing']:
 					is_playing = pb['is_playing']
@@ -106,6 +114,10 @@ class SpotifyPlayback(GObject.Object):
 
 	@GObject.Signal(arg_types=(str,))
 	def track_changed(self, track_uri):
+		pass
+
+	@GObject.Signal(arg_types=(bool,))
+	def has_playback(self, has_playback):
 		pass
 
 	def set_current_cover_art(self, image):

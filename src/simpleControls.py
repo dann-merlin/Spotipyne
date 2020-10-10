@@ -34,8 +34,8 @@ class SimpleControls(Gtk.Revealer):
 			self.pb.connect("is_playing_changed", self.updateLabel)
 			self.connect("clicked", self.on_clicked)
 			self.show()
-			self.playing_image = Gtk.Image.new_from_icon_name("media-playback-pause", Gtk.IconSize.DIALOG)
-			self.paused_image = Gtk.Image.new_from_icon_name("media-playback-start", Gtk.IconSize.DIALOG)
+			self.playing_image = Gtk.Image.new_from_icon_name("media-playback-pause", Gtk.IconSize.LARGE_TOOLBAR)
+			self.paused_image = Gtk.Image.new_from_icon_name("media-playback-start", Gtk.IconSize.LARGE_TOOLBAR)
 
 		def updateLabel(self, spotifyPlayback, is_playing):
 			self.__is_playing = is_playing
@@ -98,8 +98,29 @@ class SimpleControls(Gtk.Revealer):
 		self.mainbox.pack_start(self.songLabel, False, True, 0)
 
 		spotifyPlayback.connect("track_changed", self.on_track_changed)
+		def reveal_child(_, reveal):
+			print("Reveal: " + str(reveal))
+			self.set_reveal_child(reveal)
+		spotifyPlayback.connect("has_playback", reveal_child)
 
-		self.mainbox.pack_end(self.PlaybackButton(spotifyPlayback), False, True, 0)
+		devices_button = Gtk.Button.new_from_icon_name("multimedia-player-symbolic.symbolic", Gtk.IconSize.LARGE_TOOLBAR)
+		heart_button = Gtk.Button.new_from_icon_name("emblem-favorite-symbolic.symbolic", Gtk.IconSize.LARGE_TOOLBAR)
+		play_button = self.PlaybackButton(spotifyPlayback)
+		self.buttons = Gtk.ButtonBox(Gtk.Orientation.HORIZONTAL)
+
+		devices_button.set_relief(Gtk.ReliefStyle.NONE)
+		heart_button.set_relief(Gtk.ReliefStyle.NONE)
+		play_button.set_relief(Gtk.ReliefStyle.NONE)
+
+		self.buttons.pack_start(devices_button, False, True, 0)
+		self.buttons.pack_start(heart_button, False, True, 0)
+		self.buttons.pack_start(play_button, False, True, 0)
+		self.buttons.set_homogeneous(True)
+		self.buttons.set_halign(Gtk.Align.CENTER)
+		self.buttons.set_valign(Gtk.Align.CENTER)
+		self.buttons.set_layout(Gtk.ButtonBoxStyle.EXPAND)
+		self.mainbox.pack_end(self.buttons, False, True, 10)
+
 		spotifyPlayback.bind_property("progress_fraction", self.progressbar, "fraction")
 		self.show_all()
 
