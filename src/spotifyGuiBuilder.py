@@ -52,8 +52,8 @@ class PlaylistsListRow(Gtk.ListBoxRow):
 
 class SpotifyGuiBuilder:
 
-	def __init__(self):
-		self.coverArtLoader = CoverArtLoader()
+	def __init__(self, coverArtLoader):
+		self.coverArtLoader = coverArtLoader
 		self.currentPlaylistID = ''
 
 	def buildTrackEntry(self, trackResponse):
@@ -67,7 +67,7 @@ class SpotifyGuiBuilder:
 			pass
 		coverArt = self.coverArtLoader.getLoadingImage()
 		hbox.pack_start(coverArt, False, True, 5)
-		self.coverArtLoader.asyncUpdateCover(hbox, coverArt, url=imageUrl, uri=track['album']['uri'])
+		self.coverArtLoader.asyncUpdateCover(coverArt, url=imageUrl, uri=track['album']['uri'])
 		trackNameString = track['name']
 		artistString = reduce(lambda a, b: {'name': a['name'] + ", " + b['name']},
 					track['artists'][1:],
@@ -145,7 +145,7 @@ class SpotifyGuiBuilder:
 			imageUrl = playlist['images'][0]['url']
 			coverArt = self.coverArtLoader.getLoadingImage()
 			hbox.pack_start(coverArt, False, True, 5)
-			self.coverArtLoader.asyncUpdateCover(hbox, coverArt, url=imageUrl, uri=playlist['uri'])
+			self.coverArtLoader.asyncUpdateCover(coverArt, url=imageUrl, uri=playlist['uri'])
 			nameLabel = Gtk.Label(playlist['name'], xalign=0)
 			nameLabel.set_max_width_chars(32)
 			nameLabel.set_line_wrap(True)

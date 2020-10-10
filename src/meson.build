@@ -32,9 +32,9 @@ spotipyne_sources = [
   'spotifyGuiBuilder.py',
   'coverArtLoader.py',
   'backButton.py',
-  'spotifyPlayer.py',
+  'spotifyPlayback.py',
   'simpleControls.py',
-  'playbackState.py',
+  # 'playbackState.py',
   'spotify.py',
   'config.py',
 ]

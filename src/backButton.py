@@ -27,7 +27,7 @@ class BackButton(Gtk.Button):
 	def __init__(self, **kwargs):
 		super().__init__(**kwargs)
 
-		self.active_value = False
+		self.__active = False
 		self.set_image(Gtk.Image.new_from_icon_name("go-previous-symbolic.symbolic", Gtk.IconSize.BUTTON))
 
 
@@ -45,7 +45,7 @@ class BackButton(Gtk.Button):
 
 	@GObject.Property(type=bool,default=False)
 	def active(self):
-		return self.active_value
+		return self.__active
 
 	@active.setter
 	def active(self, new_value):
@@ -53,7 +53,7 @@ class BackButton(Gtk.Button):
 			if not requirement():
 				new_value = False
 		self.set_sensitive(new_value)
-		self.active_value = new_value
+		self.__active = new_value
 		for callback in self.callbacks:
 			callback()
 

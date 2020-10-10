@@ -19,10 +19,12 @@ import threading
 
 import gi
 gi.require_version('Handy', '1')
-from gi.repository import Gtk, Handy
+from gi.repository import Gtk, Handy, GObject
 
+from .coverArtLoader import CoverArtLoader
 from .spotifyGuiBuilder import SpotifyGuiBuilder
 from .spotify import Spotify as sp
+from .spotifyPlayback import SpotifyPlayback
 from .backButton import BackButton
 from .simpleControls import SimpleControls
 
@@ -69,6 +71,9 @@ class SpotipyneWindow(Handy.ApplicationWindow):
 	def playlist_tracks_focused(self):
 		return self.PlaylistsOverview.get_visible_child() == self.PlaylistTracks
 
+	def initCoverArtLoader(self):
+		self.coverArtLoader = CoverArtLoader()
+
 	def initPlaylistsOverview(self):
 		def initBackButton():
 			self.BackButtonBox.remove(self.BackButtonBox.get_children()[0])
@@ -76,8 +81,8 @@ class SpotipyneWindow(Handy.ApplicationWindow):
 			self.backButtonPlaylistsOverview.visible_child_add_deactivation_widget(self.Playlists)
 			self.backButtonPlaylistsOverview.addRequirement(self.playlist_tracks_focused)
 			self.BackButtonBox.add(self.backButtonPlaylistsOverview)
-			self.PlaylistsOverview.bind_property("visible-child", self.backButtonPlaylistsOverview, "visible_child_fake")
-			self.PlaylistsOverview.bind_property("folded", self.backButtonPlaylistsOverview, "visible")
+			self.PlaylistsOverview.bind_property("visible-child", self.backButtonPlaylistsOverview, "visible_child_fake", GObject.BindingFlags.SYNC_CREATE)
+			self.PlaylistsOverview.bind_property("folded", self.backButtonPlaylistsOverview, "visible", GObject.BindingFlags.SYNC_CREATE)
 			self.backButtonPlaylistsOverview.connect("clicked", self.onPlaylistOverviewBackButtonClicked)
 			self.PlaylistTracksList.connect("row-activated", self.onPlaylistTracksListRowActivated)
 			self.backButtonPlaylistsOverview.set_property("active", self.PlaylistsOverview.get_folded())
@@ -87,23 +92,32 @@ class SpotipyneWindow(Handy.ApplicationWindow):
 			self.TracksListResumeEvent = threading.Event()
 			self.TracksListResumeEvent.set()
 			self.PlaylistsList.connect("row-activated", self.onPlaylistsListRowActivated)
-			self.spGUI = SpotifyGuiBuilder()
+			self.spGUI = SpotifyGuiBuilder(self.coverArtLoader)
 			self.spGUI.asyncLoadPlaylists(self.PlaylistsList)
 
 		initLists()
 		initBackButton()
 
+	def initSpotifyPlayback(self):
+		self.spotifyPlayback = SpotifyPlayback(self.coverArtLoader)
+
 	def initSimpleControls(self):
-		self.simpleControls = SimpleControls(self.SimpleControlsParent)
-		self.simpleControls.revealed = True
+		self.simpleControls = SimpleControls(self.spotifyPlayback)
+		self.SimpleControlsParent.pack_start(self.simpleControls, False, True, 0)
+		self.simpleControls.set_reveal_child(True)
+		# self.simpleControls.revealed = True
 
 	def __init__(self, **kwargs):
 		super().__init__(**kwargs)
 
+		self.initCoverArtLoader()
+
 		self.initPlaylistsOverview()
+
+		self.initSpotifyPlayback()
 
 		self.initSimpleControls()
 
-		self.HeaderbarSwitcher.bind_property("title-visible", self.BottomSwitcher, "reveal")
+		self.HeaderbarSwitcher.bind_property("title-visible", self.BottomSwitcher, "reveal", GObject.BindingFlags.SYNC_CREATE)
 
 		self.RevealButton.connect("clicked", self.toggleReveal)

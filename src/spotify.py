@@ -61,3 +61,17 @@ class Spotify:
 			if not cls.__sp:
 				cls.__sp = Spotify()
 			return cls.__sp.sp
+
+	@classmethod
+	def start_playback(cls):
+		try:
+			cls.get().start_playback()
+		except SpotifyException as e:
+			print(e)
+
+	@classmethod
+	def pause_playback(cls):
+		try:
+			cls.get().pause_playback()
+		except SpotifyException as e:
+			print(e)

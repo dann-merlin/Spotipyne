@@ -161,24 +161,25 @@ class CoverArtLoader:
 	def getLoadingImage(self):
 		return Gtk.Image.new_from_icon_name("image-loading-symbolic.symbolic", Gtk.IconSize.DIALOG)
 
-	def asyncUpdateCover(self, parent, updateMe, uri, url):
+	def asyncUpdateCover(self, updateMe, uri, url):
 
 		# GTK
-		def updateInParent(image):
-			parent.remove(updateMe)
-			parent.pack_start(image, False, True, 5)
-			parent.show_all()
+		# def updateInParent(image):
+		# 	parent.remove(updateMe)
+		# 	parent.pack_start(image, False, True, 5)
+		# 	parent.reorder_child(image, position)
+		# 	parent.show_all()
 
 		def updateInParent_pixbuf(newChild):
 			# GTK
 			def toImage():
-				updateInParent(Gtk.Image.new_from_pixbuf(newChild))
+				updateMe.set_from_pixbuf(newChild)
 			GLib.idle_add(priority=GLib.PRIORITY_LOW, function=toImage)
 
 		def updateInParent_error():
 			# GTK
 			def errorImage():
-				updateInParent(getErrorImage())
+				updateMe.set_from_icon_name("image-missing-symbolic.symbolic", Gtk.IconSize.DIALOG)
 			GLib.idle_add(priority=GLib.PRIORITY_LOW, function=errorImage)
 
 		def getPixbufAndUpdate():
