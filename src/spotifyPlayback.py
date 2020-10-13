@@ -27,7 +27,7 @@ from .spotify import Spotify as sp
 class SpotifyPlayback(GObject.Object):
 	__gtype_name__ = "SpotifyPlayback"
 
-	SLEEP_TIME = 1
+	SLEEP_TIME = 2
 
 	def __init__(self, coverArtLoader, **kwargs):
 		super().__init__(**kwargs)
@@ -35,6 +35,9 @@ class SpotifyPlayback(GObject.Object):
 		self.duration_ms = 1.0
 		self.coverArtLoader = coverArtLoader
 		self.has_playback = False
+		self.devices = []
+		self.devices_ids = []
+		self.lock = threading.Lock()
 
 		playbackUpdateThread = threading.Thread(target=self.keepUpdating, daemon=True)
 		playbackUpdateThread.start()
@@ -48,6 +51,13 @@ class SpotifyPlayback(GObject.Object):
 		while True:
 			try:
 				pb = sp.get().current_playback()
+				devices = sp.get().devices()['devices']
+				new_devices_ids = [ dev['id'] for dev in devices ]
+				self.devices = devices
+				if new_devices_ids != self.devices_ids:
+					self.devices_ids = new_devices_ids
+					self.emit("devices_changed")
+				print(new_devices_ids)
 
 				if not pb:
 					if self.has_playback:
@@ -120,6 +130,10 @@ class SpotifyPlayback(GObject.Object):
 	def has_playback(self, has_playback):
 		pass
 
+	@GObject.Signal
+	def devices_changed(self):
+		print("devices_changed emitted!")
+
 	def set_current_cover_art(self, image):
 		self.coverArtLoader.asyncUpdateCover(image, self.track_uri, self.coverUrl)
 
@@ -128,3 +142,6 @@ class SpotifyPlayback(GObject.Object):
 
 	def get_artist_names(self):
 		return self.artists
+
+	def get_devices(self):
+		return self.devices

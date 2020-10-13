@@ -17,7 +17,7 @@
 
 import threading
 
-from gi.repository import GObject, Gtk, GLib
+from gi.repository import GObject, Gtk, GLib, Gio
 
 from .spotifyPlayback import SpotifyPlayback
 from .spotify import Spotify as sp
@@ -103,7 +103,20 @@ class SimpleControls(Gtk.Revealer):
 			self.set_reveal_child(reveal)
 		spotifyPlayback.connect("has_playback", reveal_child)
 
-		devices_button = Gtk.Button.new_from_icon_name("multimedia-player-symbolic.symbolic", Gtk.IconSize.LARGE_TOOLBAR)
+		self.devices_menu = Gio.Menu()
+		self.devices_list_menu = Gio.Menu()
+		self.devices_list_menu.append("Device1", None)
+		self.devices_list_menu.append("Device2", None)
+		spotifyPlayback.connect("devices_changed", self.updateDevicesList)
+		self.updateDevicesList(spotifyPlayback)
+		self.devices_menu.append_section("Devices", self.devices_list_menu)
+
+		devices_button = Gtk.MenuButton()
+		self.devices_popover = Gtk.Popover.new_from_model(devices_button, self.devices_menu)
+		self.devices_popover.set_relative_to(devices_button)
+		devices_button.set_popover(self.devices_popover)
+		devices_button.set_direction(Gtk.ArrowType.UP)
+		devices_button.set_image(Gtk.Image.new_from_icon_name("multimedia-player-symbolic.symbolic", Gtk.IconSize.LARGE_TOOLBAR))
 		heart_button = Gtk.Button.new_from_icon_name("emblem-favorite-symbolic.symbolic", Gtk.IconSize.LARGE_TOOLBAR)
 		play_button = self.PlaybackButton(spotifyPlayback)
 		self.buttons = Gtk.ButtonBox(Gtk.Orientation.HORIZONTAL)
@@ -123,6 +136,24 @@ class SimpleControls(Gtk.Revealer):
 
 		spotifyPlayback.bind_property("progress_fraction", self.progressbar, "fraction")
 		self.show_all()
+
+	def updateDevicesList(self, spotifyPlayback):
+		def testCallback(action, value, device_name):
+			print("Callback from action: " + str(action))
+			print("with value: " + str(value))
+			print("Device name: " + str(device_name))
+		self.devices_list_menu.remove_all()
+		devs = spotifyPlayback.get_devices()
+		self.set_reveal_child(len(devs) != 0)
+		new_device_names = [ dev['name'] for dev in devs ]
+		self.action_group = Gio.SimpleActionGroup.new()
+		for dev_name in new_device_names:
+			action_name = dev_name
+			device_action = Gio.SimpleAction(name=dev_name)
+			Gio.Application.get_default().add_action(device_action)
+			device_action.connect("activate", testCallback, dev_name)
+			detailed_action = "app." + dev_name
+			self.devices_list_menu.append(dev_name, detailed_action)
 
 	def updateSongLabel(self, spotifyPlayback):
 		label_string = '<b>' + GLib.markup_escape_text(spotifyPlayback.get_track_name()) + '</b>'
