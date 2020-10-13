@@ -24,18 +24,22 @@ from functools import reduce
 import gi
 from gi.repository import Gtk, GdkPixbuf, GLib, GObject, Pango
 
-from .coverArtLoader import CoverArtLoader
+from .coverArtLoader import CoverArtLoader, PixbufCache
 from .spotify import Spotify as sp
 
 class TrackListRow(Gtk.ListBoxRow):
 
-	def __init__(self, trackID, uri, **kwargs):
+	def __init__(self, trackID, uri, albumUri, **kwargs):
 		super().__init__(**kwargs)
 		self.trackID = trackID
 		self.uri = uri
+		self.albumUri = albumUri
 
 	def getUri(self):
 		return self.uri
+
+	def getAlbumUri(self):
+		return self.albumUri
 
 class PlaylistsListRow(Gtk.ListBoxRow):
 
@@ -58,7 +62,8 @@ class SpotifyGuiBuilder:
 
 	def buildTrackEntry(self, trackResponse):
 		track = trackResponse['track']
-		row = TrackListRow(track['id'], track['uri'])
+		albumUri = track['album']['uri']
+		row = TrackListRow(track['id'], track['uri'], albumUri = albumUri)
 		hbox = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL)
 		imageUrl = None
 		try:
@@ -67,7 +72,7 @@ class SpotifyGuiBuilder:
 			pass
 		coverArt = self.coverArtLoader.getLoadingImage()
 		hbox.pack_start(coverArt, False, True, 5)
-		self.coverArtLoader.asyncUpdateCover(coverArt, url=imageUrl, uri=track['album']['uri'])
+		self.coverArtLoader.asyncUpdateCover(coverArt, url=imageUrl, uri=albumUri)
 		trackNameString = track['name']
 		artistString = reduce(lambda a, b: {'name': a['name'] + ", " + b['name']},
 					track['artists'][1:],
@@ -83,18 +88,20 @@ class SpotifyGuiBuilder:
 		row.add(hbox)
 		return row
 
-	def clearList(self, listToClear):
-		for child in listToClear.get_children():
-			listToClear.remove(child)
-
-
 	def asyncLoadPlaylistTracks(self, tracksList, playlistID, resumeEvent, stopEvent):
 		if self.currentPlaylistID == playlistID:
 			resumeEvent.set()
 			return
 		self.currentPlaylistID = playlistID
 
-		self.clearList(tracksList)
+		sem = threading.Semaphore(0)
+
+		def removeOldPlaylist():
+			for child in tracksList.get_children():
+				tracksList.remove(child)
+				self.coverArtLoader.forget_image(child.getAlbumUri())
+			sem.release()
+		GLib.idle_add(removeOldPlaylist)
 
 		# TODO use insert
 		def addTrackEntries(tracks):
@@ -122,6 +129,7 @@ class SpotifyGuiBuilder:
 				def chunks(l, n):
 					for i in range(0, len(l), n):
 						yield l[i:i+n]
+				sem.acquire()
 				try:
 					for hugeChunk in chunks(allTracks, 100):
 						for trackChunk in chunks(hugeChunk, 10):

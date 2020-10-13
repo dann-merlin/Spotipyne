@@ -1,9 +1,3 @@
-fix some covers aren't found (probably because of markets / actually no. I don't know)
-
-error when spotify auth failed
-
-do spotify auth via interface
-
 devices should be selectable
 start/stop spotifyd with a button
 
@@ -21,3 +15,9 @@ Add playlist description above Playlistracks
 
 Future (first get real features done):
 find out why app is still unreactive while loading a playlist
+
+fix some covers aren't found (probably because of markets / actually no. I don't know)
+
+error when spotify auth failed
+
+do spotify auth via interface

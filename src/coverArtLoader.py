@@ -104,6 +104,7 @@ class PixbufCache:
 			self.entryLock = threading.Lock()
 			self.pixbuf_orig = None
 			self.pixbufs_scaled = {}
+			self.used_by = 0
 			self.error = False
 
 		def __get_orig(self, uri, url=None):
@@ -120,6 +121,8 @@ class PixbufCache:
 			return None
 
 		def get_scaled(self, uri, dim, url):
+			self.used_by += 1
+
 			if self.error:
 				return None
 
@@ -134,22 +137,35 @@ class PixbufCache:
 
 			if dim not in self.pixbufs_scaled.keys():
 				self.pixbufs_scaled[dim] = scaleToDimension(self.pixbuf_orig, dim)
+			print("There are now " + str(len(self.pixbufs_scaled.keys())) + " different scales for image of " + uri)
 			return self.pixbufs_scaled[dim]
 
+		def dec_used(self):
+			self.used_by -= 1
+
+			if self.used_by <= 0:
+				self.pixbuf_orig = None
+				self.pixbufs_scaled = {}
 
 	def __init__(self):
 		self.__pixbufs_lock = threading.Lock()
 		self.__pixbufs = {}
 
 	def get_pixbuf(self, uri, dimensions, url):
-		pixbufEntry = None
+		pixbufEntryPair = None
 		with self.__pixbufs_lock:
 			if uri not in self.__pixbufs.keys():
-				self.__pixbufs[uri] = self.PixbufCacheEntry()
-			pixbufEntry = self.__pixbufs[uri]
+				self.__pixbufs[uri] = (self.PixbufCacheEntry(), threading.Lock())
+			pixbufEntryPair = self.__pixbufs[uri]
 
-		with pixbufEntry.entryLock:
-			return pixbufEntry.get_scaled(uri, dimensions, url)
+		with pixbufEntryPair[1]:
+			return pixbufEntryPair[0].get_scaled(uri, dimensions, url)
+
+	def forget_pixbuf(self, uri):
+		with self.__pixbufs_lock:
+			if uri not in self.__pixbufs.keys():
+				return
+			self.__pixbufs[uri] = (self.PixbufCacheEntry(), self.__pixbufs[uri][1])
 
 class CoverArtLoader:
 
@@ -185,3 +201,6 @@ class CoverArtLoader:
 
 		thread = threading.Thread(target=getPixbufAndUpdate)
 		thread.start()
+
+	def forget_image(self, uri):
+		self.pixbuf_cache.forget_pixbuf(uri)
