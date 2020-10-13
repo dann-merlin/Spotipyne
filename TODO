@@ -4,4 +4,20 @@ error when spotify auth failed
 
 do spotify auth via interface
 
-huge playlists still a problem
+devices should be selectable
+start/stop spotifyd with a button
+
+normally fetch smaller images, only fetch bigger ones for the current song.
+
+Don't keep unloaded images in memory. Memory is precious on the pinephone.
+
+add search
+add functionality to heart button
+add All songs to Library
+Rename "Playlists" to "Library"
+add Spotify created playlists
+Add More controls on clicking on the simple controls panel
+Add playlist description above Playlistracks
+
+Future (first get real features done):
+find out why app is still unreactive while loading a playlist
