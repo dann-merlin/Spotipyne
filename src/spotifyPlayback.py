@@ -100,19 +100,6 @@ class SpotifyPlayback(GObject.Object):
 				print(e)
 			time.sleep(self.SLEEP_TIME)
 
-	# @GObject.Property(type=int, default=0)
-	# def progress_ms(self):
-	# 	return self.__progress_ms
-
-	# @progress_ms.setter
-	# def progress_ms(self, new_progress_ms):
-	# 	try:
-	# 		print("Seeking: " + str(new_progress_ms))
-	# 		sp.get().seek_track(new_progress_ms)
-	# 	except SpotifyException as e:
-	# 		print(e)
-	# 	self.__progress_ms = new_progress_ms
-
 	@GObject.Property(type=float, default=0.0)
 	def progress_fraction(self):
 		return self.__progress_fraction

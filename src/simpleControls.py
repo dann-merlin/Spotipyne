@@ -139,20 +139,18 @@ class SimpleControls(Gtk.Revealer):
 		self.show_all()
 
 	def updateDevicesList(self, spotifyPlayback):
-		def testCallback(action, value, device_name):
-			print("Callback from action: " + str(action))
-			print("with value: " + str(value))
-			print("Device name: " + str(device_name))
+		def activate_device(action, value, device_id):
+			sp.get().transfer_playback(device_id, force_play=True)
 		self.devices_list_menu.remove_all()
 		devs = spotifyPlayback.get_devices()
 		self.set_reveal_child(len(devs) != 0)
-		new_device_names = [ dev['name'] for dev in devs ]
 		self.action_group = Gio.SimpleActionGroup.new()
-		for dev_name in new_device_names:
+		for dev in devs:
+			dev_name = dev['name']
 			action_name = dev_name
 			device_action = Gio.SimpleAction(name=dev_name)
 			Gio.Application.get_default().add_action(device_action)
-			device_action.connect("activate", testCallback, dev_name)
+			device_action.connect("activate", activate_device, dev['id'])
 			detailed_action = "app." + dev_name
 			self.devices_list_menu.append(dev_name, detailed_action)
 

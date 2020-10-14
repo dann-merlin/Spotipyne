@@ -71,7 +71,7 @@ class Spotify:
 				if recursion_protection:
 					return
 				try:
-					cls.get().start_playback(
+					cls.start_playback(
 						context_uri=context_uri,
 						offset=offset,
 						device_id=cls.get().devices()['devices'][0]['id'],
