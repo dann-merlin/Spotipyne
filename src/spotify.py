@@ -63,15 +63,27 @@ class Spotify:
 			return cls.__sp.sp
 
 	@classmethod
-	def start_playback(cls):
+	def start_playback(cls, context_uri=None, offset=None, device_id=None):
 		try:
-			cls.get().start_playback()
-		except SpotifyException as e:
-			print(e)
+			cls.get().start_playback(context_uri=context_uri, offset=offset, device_id=device_id)
+		except spotipy.SpotifyException as e:
+			if "No active device found" in str(e):
+				try:
+					cls.get().start_playback(
+						context_uri=context_uri,
+						offset=offset,
+						device_id=cls.get().devices()['devices'][0]['id']
+						)
+				except spotipy.SpotifyException as dev_e:
+					print(str(dev_e))
+				except IndexError:
+					print("Cannot start playback. No active devices...")
+			else:
+				print(str(e))
 
 	@classmethod
 	def pause_playback(cls):
 		try:
 			cls.get().pause_playback()
-		except SpotifyException as e:
-			print(e)
+		except spotipy.SpotifyException as e:
+			print(str(e))

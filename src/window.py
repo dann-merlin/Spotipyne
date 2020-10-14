@@ -52,10 +52,7 @@ class SpotipyneWindow(Handy.ApplicationWindow):
 
 	def onPlaylistTracksListRowActivated(self, PlaylistTracksList, TrackRow):
 		uri = self.PlaylistsList.get_selected_row().getUri()
-		try:
-			sp.get().start_playback(context_uri=uri, offset={ "uri": TrackRow.getUri() })
-		except Exception as e:
-			print(e)
+		sp.start_playback(context_uri=uri, offset={ "uri": TrackRow.getUri() })
 
 	def onPlaylistsListRowActivated(self, PlaylistsList, PlaylistRow):
 		self.TracksListStopEvent.set()
