@@ -24,7 +24,7 @@ from functools import reduce
 import gi
 from gi.repository import Gtk, GdkPixbuf, GLib, GObject, Pango
 
-from .coverArtLoader import CoverArtLoader, PixbufCache, Dimensions
+from .coverArtLoader import CoverArtLoader, PixbufCache, Dimensions, get_desired_image_for_size
 from .spotify import Spotify as sp
 
 class TrackListRow(Gtk.ListBoxRow):
@@ -56,21 +56,6 @@ class PlaylistsListRow(Gtk.ListBoxRow):
 
 class SpotifyGuiBuilder:
 
-	def get_desired_image_for_size(self, desired_size, imageResponses):
-		imageUrl = None
-		selected_size = float('inf')
-		imageResponses = sorted(imageResponses, key=lambda img: img['width'])
-		for image in imageResponses:
-			if image['width'] == None or image['height'] == None:
-				continue
-			print("Image is: " + str(image))
-			smaller = image['height'] if image['width'] > image['height'] else image['width']
-			if smaller >= desired_size:
-				return image['url']
-		if imageResponses[-1]:
-			return imageResponses[-1]['url']
-		return None
-
 	def __init__(self, coverArtLoader):
 		self.coverArtLoader = coverArtLoader
 		self.currentPlaylistID = ''
@@ -83,7 +68,7 @@ class SpotifyGuiBuilder:
 		imageResponses = track['album']['images']
 
 		desired_size = 60
-		imageUrl = self.get_desired_image_for_size(desired_size, imageResponses)
+		imageUrl = get_desired_image_for_size(desired_size, imageResponses)
 
 		coverArt = self.coverArtLoader.getLoadingImage()
 		hbox.pack_start(coverArt, False, True, 5)
@@ -168,7 +153,7 @@ class SpotifyGuiBuilder:
 			imageResponses = playlist['images']
 
 			desired_size = 60
-			imageUrl = self.get_desired_image_for_size(desired_size, imageResponses)
+			imageUrl = get_desired_image_for_size(desired_size, imageResponses)
 
 			coverArt = self.coverArtLoader.getLoadingImage()
 			hbox.pack_start(coverArt, False, True, 5)

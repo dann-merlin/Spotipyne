@@ -63,16 +63,19 @@ class Spotify:
 			return cls.__sp.sp
 
 	@classmethod
-	def start_playback(cls, context_uri=None, offset=None, device_id=None):
+	def start_playback(cls, context_uri=None, offset=None, device_id=None, recursion_protection=False):
 		try:
 			cls.get().start_playback(context_uri=context_uri, offset=offset, device_id=device_id)
 		except spotipy.SpotifyException as e:
 			if "No active device found" in str(e):
+				if recursion_protection:
+					return
 				try:
 					cls.get().start_playback(
 						context_uri=context_uri,
 						offset=offset,
-						device_id=cls.get().devices()['devices'][0]['id']
+						device_id=cls.get().devices()['devices'][0]['id'],
+						recursion_protection=True
 						)
 				except spotipy.SpotifyException as dev_e:
 					print(str(dev_e))

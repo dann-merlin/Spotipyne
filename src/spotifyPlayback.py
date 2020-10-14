@@ -24,6 +24,8 @@ from gi.repository import GObject
 
 from .spotify import Spotify as sp
 
+from .coverArtLoader import CoverArtLoader, Dimensions, get_desired_image_for_size
+
 class SpotifyPlayback(GObject.Object):
 	__gtype_name__ = "SpotifyPlayback"
 
@@ -33,6 +35,7 @@ class SpotifyPlayback(GObject.Object):
 		super().__init__(**kwargs)
 		self.__shuffle = False
 		self.duration_ms = 1.0
+		self.desired_size = 80
 		self.coverArtLoader = coverArtLoader
 		self.has_playback = False
 		self.devices = []
@@ -90,7 +93,7 @@ class SpotifyPlayback(GObject.Object):
 							)['name']
 					self.track_uri = pb['item']['uri']
 					self.duration_ms = pb['item']['duration_ms']
-					self.coverUrl = pb['item']['album']['images'][0]['url']
+					self.coverUrl = get_desired_image_for_size(self.desired_size, pb['item']['album']['images'])
 					self.emit("track_changed", self.track_uri)
 				self.progress_fraction = self.progress_ms / self.duration_ms
 			except Exception as e:
@@ -135,7 +138,7 @@ class SpotifyPlayback(GObject.Object):
 		print("devices_changed emitted!")
 
 	def set_current_cover_art(self, image):
-		self.coverArtLoader.asyncUpdateCover(image, self.track_uri, self.coverUrl)
+		self.coverArtLoader.asyncUpdateCover(image, self.track_uri, self.coverUrl, Dimensions(self.desired_size, self.desired_size, True))
 
 	def get_track_name(self):
 		return self.track_name

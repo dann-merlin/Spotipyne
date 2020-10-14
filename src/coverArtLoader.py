@@ -37,7 +37,6 @@ def static_vars(**kwargs):
 def getCoverPath(uri, dim):
 	if not getCoverPath.cache_path:
 		getCoverPath.cache_path = BaseDirectory.save_cache_path(Config.applicationID + '/coverArt/')
-
 	return getCoverPath.cache_path + uri + ":" + str(dim)
 
 # GTK
@@ -57,6 +56,22 @@ def load_pixbuf_from_file(path):
 		except Exception as e:
 			print(e)
 		return None
+
+def get_desired_image_for_size(desired_size, imageResponses):
+	imageUrl = None
+	selected_size = float('inf')
+	imageResponses = sorted(imageResponses, key=lambda img: img['width'])
+	for image in imageResponses:
+		if image['width'] == None or image['height'] == None:
+			continue
+		print("Image is: " + str(image))
+		smaller = image['height'] if image['width'] > image['height'] else image['width']
+		if smaller >= desired_size:
+			return image['url']
+	if imageResponses[-1]:
+		return imageResponses[-1]['url']
+	return None
+
 
 def downloadToFile(url, toFile):
 	response = requests.get(url)
