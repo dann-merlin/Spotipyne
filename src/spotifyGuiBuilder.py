@@ -135,7 +135,7 @@ class SpotifyGuiBuilder:
 						for trackChunk in chunks(hugeChunk, 10):
 							if stopEvent.is_set():
 								break
-							GLib.idle_add(addTrackEntries, trackChunk)
+							GLib.idle_add(addTrackEntries, trackChunk, priority=GLib.PRIORITY_LOW)
 						time.sleep(1)
 				finally:
 					resumeEvent.set()

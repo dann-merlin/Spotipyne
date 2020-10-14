@@ -68,8 +68,11 @@ def get_desired_image_for_size(desired_size, imageResponses):
 		smaller = image['height'] if image['width'] > image['height'] else image['width']
 		if smaller >= desired_size:
 			return image['url']
-	if imageResponses[-1]:
-		return imageResponses[-1]['url']
+	try:
+		if imageResponses[-1]:
+			return imageResponses[-1]['url']
+	except IndexError:
+		pass
 	return None
 
 

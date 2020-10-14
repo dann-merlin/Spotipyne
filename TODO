@@ -1,10 +1,7 @@
 devices should be selectable
 start/stop spotifyd with a button
 
-normally fetch smaller images, only fetch bigger ones for the current song.
-
-Don't keep unloaded images in memory. Memory is precious on the pinephone.
-
+better handling for selecting playlist, while another is still loading
 add search
 add functionality to heart button
 add All songs to Library
