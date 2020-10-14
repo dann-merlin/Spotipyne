@@ -34,11 +34,11 @@ def static_vars(**kwargs):
 
 
 @static_vars(cache_path=None)
-def getCoverPath(uri):
+def getCoverPath(uri, dim):
 	if not getCoverPath.cache_path:
-		getCoverPath.cache_path = BaseDirectory.save_cache_path(Config.applicationID + 'coverArt')
+		getCoverPath.cache_path = BaseDirectory.save_cache_path(Config.applicationID + '/coverArt/')
 
-	return getCoverPath.cache_path + uri
+	return getCoverPath.cache_path + uri + ":" + str(dim)
 
 # GTK
 @static_vars(image=None)
@@ -90,6 +90,9 @@ class Dimensions:
 			self.height = self.width
 		self.be_square = be_square
 
+	def __str__(self):
+		return str(self.width) + "x" + str(self.height) + "x" + str(self.be_square)
+
 def scaleToDimension(pixbuf, dim):
 	cropped = pixbuf
 	if dim.be_square:
@@ -107,8 +110,8 @@ class PixbufCache:
 			self.used_by = 0
 			self.error = False
 
-		def __get_orig(self, uri, url=None):
-			cachePath = getCoverPath(uri)
+		def __get_orig(self, uri, dim, url=None):
+			cachePath = getCoverPath(uri, dim)
 			if os.path.isfile(cachePath):
 				loaded = load_pixbuf_from_file(path=cachePath)
 				if loaded:
@@ -117,7 +120,7 @@ class PixbufCache:
 					return loaded
 			if url:
 				downloadToFile(url, cachePath)
-				return self.__get_orig(uri, None)
+				return self.__get_orig(uri, dim, None)
 			return None
 
 		def get_scaled(self, uri, dim, url):
@@ -130,14 +133,13 @@ class PixbufCache:
 				return self.pixbufs_scaled[dim]
 
 			if not self.pixbuf_orig:
-				self.pixbuf_orig = self.__get_orig(uri, url)
+				self.pixbuf_orig = self.__get_orig(uri, dim, url)
 				if not self.pixbuf_orig:
 					self.error = True
 					return None
 
 			if dim not in self.pixbufs_scaled.keys():
 				self.pixbufs_scaled[dim] = scaleToDimension(self.pixbuf_orig, dim)
-			print("There are now " + str(len(self.pixbufs_scaled.keys())) + " different scales for image of " + uri)
 			return self.pixbufs_scaled[dim]
 
 		def dec_used(self):
@@ -177,7 +179,7 @@ class CoverArtLoader:
 	def getLoadingImage(self):
 		return Gtk.Image.new_from_icon_name("image-loading-symbolic.symbolic", Gtk.IconSize.DIALOG)
 
-	def asyncUpdateCover(self, updateMe, uri, url):
+	def asyncUpdateCover(self, updateMe, uri, url, dimensions=Dimensions(16, 16, True)):
 
 		def updateInParent_pixbuf(newChild):
 			# GTK
@@ -192,8 +194,7 @@ class CoverArtLoader:
 			GLib.idle_add(priority=GLib.PRIORITY_LOW, function=errorImage)
 
 		def getPixbufAndUpdate():
-			dim = Dimensions(60, 60, True)
-			pixbuf = self.pixbuf_cache.get_pixbuf(uri=uri, dimensions=dim, url=url)
+			pixbuf = self.pixbuf_cache.get_pixbuf(uri=uri, dimensions=dimensions, url=url)
 			if pixbuf:
 				updateInParent_pixbuf(pixbuf)
 			else:

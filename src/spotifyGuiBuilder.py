@@ -24,7 +24,7 @@ from functools import reduce
 import gi
 from gi.repository import Gtk, GdkPixbuf, GLib, GObject, Pango
 
-from .coverArtLoader import CoverArtLoader, PixbufCache
+from .coverArtLoader import CoverArtLoader, PixbufCache, Dimensions
 from .spotify import Spotify as sp
 
 class TrackListRow(Gtk.ListBoxRow):
@@ -56,6 +56,21 @@ class PlaylistsListRow(Gtk.ListBoxRow):
 
 class SpotifyGuiBuilder:
 
+	def get_desired_image_for_size(self, desired_size, imageResponses):
+		imageUrl = None
+		selected_size = float('inf')
+		imageResponses = sorted(imageResponses, key=lambda img: img['width'])
+		for image in imageResponses:
+			if image['width'] == None or image['height'] == None:
+				continue
+			print("Image is: " + str(image))
+			smaller = image['height'] if image['width'] > image['height'] else image['width']
+			if smaller >= desired_size:
+				return image['url']
+		if imageResponses[-1]:
+			return imageResponses[-1]['url']
+		return None
+
 	def __init__(self, coverArtLoader):
 		self.coverArtLoader = coverArtLoader
 		self.currentPlaylistID = ''
@@ -65,14 +80,14 @@ class SpotifyGuiBuilder:
 		albumUri = track['album']['uri']
 		row = TrackListRow(track['id'], track['uri'], albumUri = albumUri)
 		hbox = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL)
-		imageUrl = None
-		try:
-			imageUrl = track['album']['images'][0]['url']
-		except IndexError:
-			pass
+		imageResponses = track['album']['images']
+
+		desired_size = 60
+		imageUrl = self.get_desired_image_for_size(desired_size, imageResponses)
+
 		coverArt = self.coverArtLoader.getLoadingImage()
 		hbox.pack_start(coverArt, False, True, 5)
-		self.coverArtLoader.asyncUpdateCover(coverArt, url=imageUrl, uri=albumUri)
+		self.coverArtLoader.asyncUpdateCover(coverArt, url=imageUrl, uri=albumUri, dimensions=Dimensions(desired_size, desired_size, True))
 		trackNameString = track['name']
 		artistString = reduce(lambda a, b: {'name': a['name'] + ", " + b['name']},
 					track['artists'][1:],
@@ -80,7 +95,7 @@ class SpotifyGuiBuilder:
 					)['name']
 		trackLabelString = '<b>' + GLib.markup_escape_text(trackNameString) + '</b>' + '\n' + GLib.markup_escape_text(artistString)
 		trackLabel = Gtk.Label(xalign=0)
-		trackLabel.set_max_width_chars(64)
+		trackLabel.set_max_width_chars(32)
 		trackLabel.set_line_wrap(True)
 		trackLabel.set_line_wrap_mode(Pango.WrapMode.WORD_CHAR);
 		trackLabel.set_markup(trackLabelString)
@@ -150,10 +165,14 @@ class SpotifyGuiBuilder:
 		def addPlaylistEntry(playlist):
 			row = PlaylistsListRow(playlist['id'], playlist['uri'])
 			hbox = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL)
-			imageUrl = playlist['images'][0]['url']
+			imageResponses = playlist['images']
+
+			desired_size = 60
+			imageUrl = self.get_desired_image_for_size(desired_size, imageResponses)
+
 			coverArt = self.coverArtLoader.getLoadingImage()
 			hbox.pack_start(coverArt, False, True, 5)
-			self.coverArtLoader.asyncUpdateCover(coverArt, url=imageUrl, uri=playlist['uri'])
+			self.coverArtLoader.asyncUpdateCover(coverArt, url=imageUrl, uri=playlist['uri'], dimensions=Dimensions(desired_size, desired_size, True))
 			nameLabel = Gtk.Label(playlist['name'], xalign=0)
 			nameLabel.set_max_width_chars(32)
 			nameLabel.set_line_wrap(True)
