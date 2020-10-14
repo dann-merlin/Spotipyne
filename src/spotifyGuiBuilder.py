@@ -101,7 +101,7 @@ class SpotifyGuiBuilder:
 				tracksList.remove(child)
 				self.coverArtLoader.forget_image(child.getAlbumUri())
 			sem.release()
-		GLib.idle_add(removeOldPlaylist)
+		GLib.idle_add(removeOldPlaylist, priority=GLib.PRIORITY_LOW)
 
 		# TODO use insert
 		def addTrackEntries(tracks):
@@ -180,7 +180,7 @@ class SpotifyGuiBuilder:
 
 			def addAllPlaylistEntries():
 				for playlist in allPlaylists:
-					GLib.idle_add(addPlaylistEntry, playlist)
+					GLib.idle_add(addPlaylistEntry, playlist, priority=GLib.PRIORITY_LOW)
 
 			addAllPlaylistEntries()
 
