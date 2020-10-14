@@ -21,6 +21,7 @@ from gi.repository import GObject, Gtk, GLib, Gio
 
 from .spotifyPlayback import SpotifyPlayback
 from .spotify import Spotify as sp
+from .coverArtLoader import Dimensions
 
 @Gtk.Template(resource_path='/xyz/merlinx/Spotipyne/simpleControls.ui')
 class SimpleControls(Gtk.Revealer):
@@ -162,5 +163,5 @@ class SimpleControls(Gtk.Revealer):
 		self.songLabel.set_markup(label_string)
 
 	def on_track_changed(self, spotifyPlayback, track_uri):
-		spotifyPlayback.set_current_cover_art(self.coverArt)
+		spotifyPlayback.set_current_cover_art(self.coverArt, Dimensions(60,60,True))
 		self.updateSongLabel(spotifyPlayback)

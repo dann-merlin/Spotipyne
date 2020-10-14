@@ -35,7 +35,7 @@ class SpotifyPlayback(GObject.Object):
 		super().__init__(**kwargs)
 		self.__shuffle = False
 		self.duration_ms = 1.0
-		self.desired_size = 80
+		self.desired_size = 60
 		self.coverArtLoader = coverArtLoader
 		self.has_playback = False
 		self.devices = []
@@ -137,8 +137,10 @@ class SpotifyPlayback(GObject.Object):
 	def devices_changed(self):
 		print("devices_changed emitted!")
 
-	def set_current_cover_art(self, image):
-		self.coverArtLoader.asyncUpdateCover(image, self.track_uri, self.coverUrl, Dimensions(self.desired_size, self.desired_size, True))
+	def set_current_cover_art(self, image, dim=None):
+		if dim is None:
+			dim = Dimensions(self.desired_size, self.desired_size, True)
+		self.coverArtLoader.asyncUpdateCover(image, self.track_uri, self.coverUrl, dim)
 
 	def get_track_name(self):
 		return self.track_name
