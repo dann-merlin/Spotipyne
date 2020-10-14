@@ -1,6 +1,7 @@
 devices should be selectable
 start/stop spotifyd with a button
 
+limit threads, that are started when loading a playlist
 better handling for selecting playlist, while another is still loading
 add search
 add functionality to heart button

@@ -131,7 +131,7 @@ class SpotifyGuiBuilder:
 						yield l[i:i+n]
 				sem.acquire()
 				try:
-					for hugeChunk in chunks(allTracks, 100):
+					for hugeChunk in chunks(allTracks, 50):
 						for trackChunk in chunks(hugeChunk, 10):
 							if stopEvent.is_set():
 								break
