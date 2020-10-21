@@ -21,7 +21,7 @@ check_installed_lib() {
 }
 
 
-as_flatpak() {
+as_flatpak() { # not working I believe
 	check_installed_bin dex
 	check_installed_bin flatpak-builder
 	check_installed_bin flatpak
