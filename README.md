@@ -1,9 +1,11 @@
 # Spotipyne
 Gtk Spotify client written in python made to be compatible with mobile formfactors like a pinephone.
 
-![Screenshot Desktop](https://gitlab.com/dann-merlin/spotipyne/-/raw/master/assets/desktop_library.png)
-![Screenshot Mobile Playlist](https://gitlab.com/dann-merlin/spotipyne/-/raw/master/assets/mobile_playlists.png)
-![Screenshot Mobile Tracks](https://gitlab.com/dann-merlin/spotipyne/-/raw/master/assets/mobile_tracks.png)
+<img src="https://gitlab.com/dann-merlin/spotipyne/-/raw/master/assets/desktop_library.png" alt="Screenshot Desktop" title="Screenshot Desktop" height=600/>
+<br/>
+<img src="https://gitlab.com/dann-merlin/spotipyne/-/raw/master/assets/mobile_playlists.png" alt="Screenshot Mobile Playlist" title="Screenshot Mobile Playlist" height=600/>
+<img src="https://gitlab.com/dann-merlin/spotipyne/-/raw/master/assets/mobile_tracks.png" alt="Screenshot Mobile Tracks" title="Screenshot Mobile Tracks" height=600/>
+<br/>
 
 Note: You need to have a spotify device running in order to play songs. This could for example be the official player or spotifyd.
 
