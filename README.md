@@ -7,6 +7,10 @@ Gtk Spotify client written in python made to be compatible with mobile formfacto
 <img src="https://gitlab.com/dann-merlin/spotipyne/-/raw/master/assets/mobile_tracks.png" alt="Screenshot Mobile Tracks" title="Screenshot Mobile Tracks" height=600/>
 <br/>
 
+These images use the Adwaita dark theme. One way enable it, is to set the environment variable GTK_THEME
+
+``export GTK_THEME=Adwaita:dark``
+
 Note: You need to have a spotify device running in order to play songs. This could for example be the official player or spotifyd.
 
 # What works?
