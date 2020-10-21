@@ -64,7 +64,6 @@ def get_desired_image_for_size(desired_size, imageResponses):
 	for image in imageResponses:
 		if image['width'] == None or image['height'] == None:
 			continue
-		print("Image is: " + str(image))
 		smaller = image['height'] if image['width'] > image['height'] else image['width']
 		if smaller >= desired_size:
 			return image['url']

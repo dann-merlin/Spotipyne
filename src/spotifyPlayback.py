@@ -60,7 +60,6 @@ class SpotifyPlayback(GObject.Object):
 				if new_devices_ids != self.devices_ids:
 					self.devices_ids = new_devices_ids
 					self.emit("devices_changed")
-				print(new_devices_ids)
 
 				if not pb:
 					if self.has_playback:
