@@ -1,6 +1,8 @@
 # Spotipyne
 Gtk Spotify client written in python made to be compatible with mobile formfactors like a pinephone.
 
+Note: You need to have a spotify device running in order to play songs. This could for example be the official player or spotifyd.
+
 # Build dependencies
 
 - meson
