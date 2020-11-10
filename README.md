@@ -40,6 +40,7 @@ I have not implemented a way to set it inside the application yet.
 
 - meson
 - ninja
+- pip (optional - alternatively you might be able to install the python packages with your package manager)
 
 # Dependencies
 
