@@ -28,6 +28,7 @@ class SearchOverview(Gtk.Box):
 	__gtype_name__ = 'SearchOverview'
 
 	SearchBarEntry = Gtk.Template.Child()
+	SearchDeck = Gtk.Template.Child()
 
 	def __init__(self, GuiBuilder, **kwargs):
 		super().__init__(**kwargs)
@@ -39,7 +40,8 @@ class SearchOverview(Gtk.Box):
 		startSearchLabel = Gtk.Label("Input a search request and press enter...", xalign=0)
 		self.SearchResultsBox.pack_start(startSearchLabel, False, True, 0)
 		self.ScrolledWindow.add(self.SearchResultsBox)
-		self.pack_start(self.ScrolledWindow, True, True, 0)
+		self.SearchDeck.add(self.ScrolledWindow)
+		self.SearchOverlay = None
 		self.show_all()
 
 	def __setNewResultsBox(self, newBox):
@@ -48,11 +50,18 @@ class SearchOverview(Gtk.Box):
 		self.ScrolledWindow.add(self.SearchResultsBox)
 		self.show_all()
 
+	def setSearchOverlay(self, widget):
+		if self.SearchOverlay is not None:
+			self.SearchDeck.remove(self.SearchOverlay)
+		self.SearchDeck.add(widget)
+		self.SearchDeck.set_visible_child(widget)
+		self.SearchOverlay = widget
+
 	def setNewSearch(self, text):
 		searchResponse = sp.get().search(text, limit=4, offset=0, type='track,playlist,show,episode,album,artist')
 		def _setNewSearch():
 			newSearchResultsBox = Gtk.Box(orientation=Gtk.Orientation.VERTICAL)
-			self.GuiBuilder.buildSearchResults(newSearchResultsBox, searchResponse)
+			self.GuiBuilder.buildSearchResults(newSearchResultsBox, searchResponse, self.setSearchOverlay)
 			self.remove(self.SearchResultsBox)
 			self.__setNewResultsBox(newSearchResultsBox)
 		GLib.idle_add(_setNewSearch)

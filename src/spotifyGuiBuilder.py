@@ -27,38 +27,75 @@ from gi.repository import Gtk, GdkPixbuf, GLib, GObject, Pango
 from .coverArtLoader import CoverArtLoader, PixbufCache, Dimensions, get_desired_image_for_size
 from .spotify import Spotify as sp
 
-class TrackListRow(Gtk.ListBoxRow):
+# TODO maybe just remove the non genericRows
+class GenericSpotifyRow(Gtk.ListBoxRow):
 
-	def __init__(self, trackID, uri, albumUri, **kwargs):
+	def __init__(self, uri, **kwargs):
 		super().__init__(**kwargs)
-		self.trackID = trackID
-		self.uri = uri
-		self.albumUri = albumUri
-
-	def getUri(self):
-		return self.uri
-
-	def getAlbumUri(self):
-		return self.albumUri
-
-class PlaylistsListRow(Gtk.ListBoxRow):
-
-	def __init__(self, playlistID, uri, **kwargs):
-		super().__init__(**kwargs)
-		self.playlistID = playlistID
 		self.uri = uri
 
 	def getUri(self):
 		return self.uri
 
-	def getPlaylistID(self):
-		return self.playlistID
+class AlbumRow(GenericSpotifyRow):
+
+	def __init__(self, **kwargs):
+		super().__init__(**kwargs)
+
+class TrackRow(GenericSpotifyRow):
+
+	def __init__(self, **kwargs):
+		super().__init__(**kwargs)
+
+class ArtistRow(GenericSpotifyRow):
+
+	def __init__(self, **kwargs):
+		super().__init__(**kwargs)
+
+class EpisodeRow(GenericSpotifyRow):
+
+	def __init__(self, **kwargs):
+		super().__init__(**kwargs)
+
+class ShowRow(GenericSpotifyRow):
+
+	def __init__(self, **kwargs):
+		super().__init__(**kwargs)
+
+class PlaylistRow(GenericSpotifyRow):
+
+	def __init__(self, **kwargs):
+		super().__init__(**kwargs)
 
 class SpotifyGuiBuilder:
 
 	def __init__(self, coverArtLoader):
 		self.coverArtLoader = coverArtLoader
 		self.currentPlaylistID = ''
+
+	def buildArtistPage(self, artist_uri):
+		vbox = Gtk.Box(orientation=Gtk.Orientation.VERTICAL)
+		vbox.pack_start(Gtk.Label("Artist " + artist_uri), False, True, 0)
+		vbox.show_all()
+		return vbox
+
+	def buildAlbumPage(self, album_uri):
+		vbox = Gtk.Box(orientation=Gtk.Orientation.VERTICAL)
+		vbox.pack_start(Gtk.Label("Album " + album_uri), False, True, 0)
+		vbox.show_all()
+		return vbox
+
+	def buildPlaylistPage(self, playlist_uri):
+		vbox = Gtk.Box(orientation=Gtk.Orientation.VERTICAL)
+		vbox.pack_start(Gtk.Label("Playlist " + playlist_uri), False, True, 0)
+		vbox.show_all()
+		return vbox
+
+	def buildShowPage(self, show_uri):
+		vbox = Gtk.Box(orientation=Gtk.Orientation.VERTICAL)
+		vbox.pack_start(Gtk.Label("Show " + show_uri), False, True, 0)
+		vbox.show_all()
+		return vbox
 
 	def __buildGenericEntry(self, entry, imageResponses, uri, labelText, desiredCoverSize = 60):
 		hbox = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL)
@@ -80,7 +117,7 @@ class SpotifyGuiBuilder:
 
 	def buildTrackEntry(self, trackResponse):
 		albumUri = trackResponse['album']['uri']
-		row = TrackListRow(trackResponse['id'], trackResponse['uri'], albumUri = albumUri)
+		row = TrackRow(uri=trackResponse['uri'])
 		imageResponses = trackResponse['album']['images']
 
 		trackNameString = trackResponse['name']
@@ -93,28 +130,28 @@ class SpotifyGuiBuilder:
 
 	def buildArtistEntry(self, artistResponse):
 		artistUri = artistResponse['uri']
-		row = Gtk.ListBoxRow()
+		row = ArtistRow(uri=artistUri)
 		imageResponses = artistResponse['images']
 		labelMarkup = '<b>' + GLib.markup_escape_text(artistResponse['name']) + '</b>' + '\n' + GLib.markup_escape_text(str(artistResponse['followers']['total']) + ' followers')
 		return self.__buildGenericEntry(row, imageResponses, artistUri, labelMarkup)
 
 	def buildEpisodeEntry(self, episodeResponse):
 		episodeUri = episodeResponse['uri']
-		row = Gtk.ListBoxRow()
+		row = EpisodeRow(uri=episodeUri)
 		imageResponses = episodeResponse['images']
 		labelMarkup = '<b>' + GLib.markup_escape_text(episodeResponse['name']) + '</b>' + '\n' + GLib.markup_escape_text(episodeResponse['description'])
 		return self.__buildGenericEntry(row, imageResponses, episodeUri, labelMarkup)
 
 	def buildShowEntry(self, showResponse):
 		showUri = showResponse['uri']
-		row = Gtk.ListBoxRow()
+		row = ShowRow(uri=showUri)
 		imageResponses = showResponse['images']
 		labelMarkup = '<b>' + GLib.markup_escape_text(showResponse['name']) + '</b>' + '\n' + GLib.markup_escape_text(showResponse['publisher'])
 		return self.__buildGenericEntry(row, imageResponses, showUri, labelMarkup)
 
 	def buildAlbumEntry(self, albumResponse):
 		albumUri = albumResponse['uri']
-		row = Gtk.ListBoxRow()
+		row = AlbumRow(uri=albumUri)
 		imageResponses = albumResponse['images']
 		artistString = reduce(lambda a, b: {'name': a['name'] + ", " + b['name']},
 					albumResponse['artists'][1:],
@@ -124,39 +161,75 @@ class SpotifyGuiBuilder:
 		return self.__buildGenericEntry(row, imageResponses, albumUri, labelMarkup)
 
 	def buildPlaylistEntry(self, playlistResponse):
-		row = PlaylistsListRow(playlistResponse['id'], playlistResponse['uri'])
+		playlistUri = playlistResponse['uri']
+		row = PlaylistRow(uri=playlistUri)
 		imageResponses = playlistResponse['images']
-
-		return self.__buildGenericEntry(row, imageResponses, playlistResponse['uri'], GLib.markup_escape_text(playlistResponse['name']))
+		return self.__buildGenericEntry(row, imageResponses, playlistUri, GLib.markup_escape_text(playlistResponse['name']))
 
 	def buildGenericList(self, genericList, response, entryBuildFunction):
 		for item in response['items']:
 			genericList.add(entryBuildFunction(item))
 		genericList.show_all()
 
-	def buildSearchResults(self, searchResultBox, searchResponse):
-		def _searchResultHelper(searchType, name, buildEntryFunction):
+	def buildSearchResults(self, searchResultBox, searchResponse, setSearchOverlayFunction):
+		def _searchResultHelper(searchType, name, buildEntryFunction, activationHandler):
 			response = searchResponse[searchType]
 			resultBox = Gtk.Box(orientation=Gtk.Orientation.VERTICAL)
+			resultTitle = Gtk.Label(xalign=0)
+			resultTitle.set_markup('<b>' + name + '</b>')
+			resultBox.pack_start(resultTitle, False, True, 0)
 			if len(response['items']) != 0:
-				resultTitle = Gtk.Label(xalign=0)
-				resultTitle.set_markup('<b>' + name + '</b>')
-				resultBox.pack_start(resultTitle, False, True, 0)
 				resultsList = Gtk.ListBox()
+				resultsList.connect("row-activated", activationHandler)
 				GLib.idle_add(self.buildGenericList, resultsList, response, buildEntryFunction)
 				resultBox.pack_start(resultsList, False, True, 0)
+				searchResultBox.pack_start(resultBox, False, True, 0)
 			else:
 				notFoundLabel = Gtk.Label(xalign=0)
 				notFoundLabel.set_markup('Could not find any ' + searchType + ' matching your search query...')
 				resultBox.pack_start(notFoundLabel, False, True, 0)
-			searchResultBox.pack_start(resultBox, False, True, 0)
-		# TODO also for playlist albums etc...
-		_searchResultHelper('tracks', 'Tracks', self.buildTrackEntry)
-		_searchResultHelper('artists', 'Artists', self.buildArtistEntry)
-		_searchResultHelper('albums', 'Albums', self.buildAlbumEntry)
-		_searchResultHelper('playlists', 'Playlists', self.buildPlaylistEntry)
-		_searchResultHelper('shows', 'Shows', self.buildShowEntry)
-		_searchResultHelper('episodes', 'Episodes', self.buildEpisodeEntry)
+				searchResultBox.pack_end(resultBox, False, True, 0)
+
+		searchQueries = [
+			{
+				'type': 'tracks',
+				'name': 'Tracks',
+				'buildEntryFunction': self.buildTrackEntry,
+				'activationHandler': lambda _, entry: sp.start_playback(uris=[entry.getUri()])
+			},
+			{
+				'type': 'artists',
+				'name': 'Artists',
+				'buildEntryFunction': self.buildArtistEntry,
+				'activationHandler': lambda _, entry: setSearchOverlayFunction(self.buildArtistPage(entry.getUri()))
+			},
+			{
+				'type': 'albums',
+				'name': 'Albums',
+				'buildEntryFunction': self.buildAlbumEntry,
+				'activationHandler': lambda _, entry: setSearchOverlayFunction(self.buildAlbumPage(entry.getUri()))
+			},
+			{
+				'type': 'playlists',
+				'name': 'Playlists',
+				'buildEntryFunction': self.buildPlaylistEntry,
+				'activationHandler': lambda _, entry: setSearchOverlayFunction(self.buildPlaylistPage(entry.getUri()))
+			},
+			{
+				'type': 'shows',
+				'name': 'Shows',
+				'buildEntryFunction': self.buildShowEntry,
+				'activationHandler': lambda _, entry: setSearchOverlayFunction(self.buildShowPage(entry.getUri()))
+			},
+			{
+				'type': 'episodes',
+				'name': 'Episodes',
+				'buildEntryFunction': self.buildEpisodeEntry,
+				'activationHandler': lambda _, entry: sp.start_playback(uris=[entry.getUri()])
+			}
+		]
+		for searchQuery in searchQueries:
+			_searchResultHelper(searchQuery['type'], searchQuery['name'], searchQuery['buildEntryFunction'], searchQuery['activationHandler'])
 		searchResultBox.show_all()
 
 	def asyncLoadPlaylistTracks(self, tracksList, playlistID, resumeEvent, stopEvent):
@@ -170,7 +243,8 @@ class SpotifyGuiBuilder:
 		def removeOldPlaylist():
 			for child in tracksList.get_children():
 				tracksList.remove(child)
-				self.coverArtLoader.forget_image(child.getAlbumUri())
+				# TODO
+				# self.coverArtLoader.forget_image(child.getAlbumUri())
 			sem.release()
 		GLib.idle_add(removeOldPlaylist, priority=GLib.PRIORITY_LOW)
 
@@ -219,7 +293,8 @@ class SpotifyGuiBuilder:
 	def asyncLoadPlaylists(self, playlistsList):
 		# TODO use insert
 		def addPlaylistEntry(playlist):
-			row = PlaylistsListRow(playlist['id'], playlist['uri'])
+			playlistUri = playlist['uri']
+			row = PlaylistRow(uri=playlistUri)
 			hbox = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL)
 			imageResponses = playlist['images']
 
@@ -228,7 +303,7 @@ class SpotifyGuiBuilder:
 
 			coverArt = self.coverArtLoader.getLoadingImage()
 			hbox.pack_start(coverArt, False, True, 5)
-			self.coverArtLoader.asyncUpdateCover(coverArt, url=imageUrl, uri=playlist['uri'], dimensions=Dimensions(desired_size, desired_size, True))
+			self.coverArtLoader.asyncUpdateCover(coverArt, url=imageUrl, uri=playlistUri, dimensions=Dimensions(desired_size, desired_size, True))
 			nameLabel = Gtk.Label(playlist['name'], xalign=0)
 			nameLabel.set_max_width_chars(32)
 			nameLabel.set_line_wrap(True)

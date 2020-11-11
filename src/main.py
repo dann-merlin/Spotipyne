@@ -32,7 +32,7 @@ class Application(Gtk.Application):
                          flags=Gio.ApplicationFlags.FLAGS_NONE)
 
     def do_activate(self):
-        win = self.props.active_window
+        win = self.get_active_window()
         if not win:
             win = SpotipyneWindow(application=self)
         win.present()

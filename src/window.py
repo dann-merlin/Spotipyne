@@ -60,7 +60,7 @@ class SpotipyneWindow(Handy.ApplicationWindow):
 		self.TracksListResumeEvent.wait()
 		self.TracksListResumeEvent.clear()
 		self.TracksListStopEvent.clear()
-		self.spGUI.asyncLoadPlaylistTracks(self.PlaylistTracksList, PlaylistRow.getPlaylistID(), self.TracksListResumeEvent, self.TracksListStopEvent)
+		self.spGUI.asyncLoadPlaylistTracks(self.PlaylistTracksList, PlaylistRow.getUri().split(":")[-1], self.TracksListResumeEvent, self.TracksListStopEvent)
 		self.PlaylistsOverview.set_visible_child_name("1")
 
 	def toggleReveal(self, button):
