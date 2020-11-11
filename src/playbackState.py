@@ -16,6 +16,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import threading
+import spotipy
 from .spotify import Spotify as sp
 from gi.repository import GObject
 from enum import IntEnum
@@ -59,7 +60,7 @@ class PlaybackState(GObject.Object):
 			while True:
 				try:
 					sp.get().current_playback()
-				except SpotifyException as e:
+				except spotipy.SpotifyException as e:
 					print(e)
 				# TODO update loop ( update itself has to be in GLib.idle_add )
 		thread = threading.Thread(target=stateUpdateLoop, daemon=True)

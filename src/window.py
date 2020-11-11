@@ -27,6 +27,7 @@ from .spotify import Spotify as sp
 from .spotifyPlayback import SpotifyPlayback
 from .backButton import BackButton
 from .simpleControls import SimpleControls
+from .searchOverview import SearchOverview
 
 @Gtk.Template(resource_path='/xyz/merlinx/Spotipyne/window.ui')
 class SpotipyneWindow(Handy.ApplicationWindow):
@@ -89,7 +90,6 @@ class SpotipyneWindow(Handy.ApplicationWindow):
 			self.TracksListResumeEvent = threading.Event()
 			self.TracksListResumeEvent.set()
 			self.PlaylistsList.connect("row-activated", self.onPlaylistsListRowActivated)
-			self.spGUI = SpotifyGuiBuilder(self.coverArtLoader)
 			self.spGUI.asyncLoadPlaylists(self.PlaylistsList)
 
 		initLists()
@@ -103,12 +103,21 @@ class SpotipyneWindow(Handy.ApplicationWindow):
 		self.SimpleControlsParent.pack_start(self.simpleControls, False, True, 0)
 		self.simpleControls.set_reveal_child(False)
 
+	def initSearchOverview(self):
+		self.searchOverview = SearchOverview(self.spGUI)
+		self.MainStack.add_titled(self.searchOverview, 'Search', 'Search')
+		self.MainStack.child_set_property(self.searchOverview, "icon-name", "edit-find-symbolic")
+
 	def __init__(self, **kwargs):
 		super().__init__(**kwargs)
 
 		self.initCoverArtLoader()
 
+		self.spGUI = SpotifyGuiBuilder(self.coverArtLoader)
+
 		self.initPlaylistsOverview()
+
+		self.initSearchOverview()
 
 		self.initSpotifyPlayback()
 

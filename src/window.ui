@@ -201,32 +201,7 @@
                       </packing>
                     </child>
                     <child>
-                      <object class="GtkBox" id="SearchOverview">
-                        <property name="visible">True</property>
-                        <property name="can-focus">False</property>
-                        <property name="orientation">vertical</property>
-                        <child>
-                          <object class="GtkLabel">
-                            <property name="visible">True</property>
-                            <property name="can-focus">False</property>
-                            <property name="label" translatable="yes">Search not implemented yet...</property>
-                            <attributes>
-                              <attribute name="size" value="14336"/>
-                            </attributes>
-                          </object>
-                          <packing>
-                            <property name="expand">True</property>
-                            <property name="fill">True</property>
-                            <property name="position">0</property>
-                          </packing>
-                        </child>
-                      </object>
-                      <packing>
-                        <property name="name">Search</property>
-                        <property name="title" translatable="yes">Search</property>
-                        <property name="icon-name">edit-find-symbolic</property>
-                        <property name="position">1</property>
-                      </packing>
+                      <placeholder/>
                     </child>
                     <child>
                       <object class="GtkBox" id="TestPage">

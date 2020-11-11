@@ -35,7 +35,7 @@ class Spotify:
 			sys.exit(1)
 		username = os.getenv("SPOTIPYNE_USERNAME") #TODO read in via dialog and save
 		if not username:
-			raise SpotifyException("Please set your username in the SPOTIPYNE_USERNAME environment variable.")
+			raise spotipy.SpotifyException("Please set your username in the SPOTIPYNE_USERNAME environment variable.")
 		clientID = os.getenv("SPOTIPY_CLIENT_ID",  "72d3a0443ae547db8e6471841f0ac6d7")
 		clientSecret = os.getenv("SPOTIPY_CLIENT_SECRET", "ac0ed069a1f4470c9068690a19b5960e")
 

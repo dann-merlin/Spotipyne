@@ -35,8 +35,10 @@ class SimpleControls(Gtk.Revealer):
 			self.pb.connect("is_playing_changed", self.updateLabel)
 			self.connect("clicked", self.on_clicked)
 			self.show()
+			self.__is_playing = False
 			self.playing_image = Gtk.Image.new_from_icon_name("media-playback-pause", Gtk.IconSize.LARGE_TOOLBAR)
 			self.paused_image = Gtk.Image.new_from_icon_name("media-playback-start", Gtk.IconSize.LARGE_TOOLBAR)
+			self.set_image(self.paused_image)
 
 		def updateLabel(self, spotifyPlayback, is_playing):
 			self.__is_playing = is_playing

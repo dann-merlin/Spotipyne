@@ -60,33 +60,104 @@ class SpotifyGuiBuilder:
 		self.coverArtLoader = coverArtLoader
 		self.currentPlaylistID = ''
 
-	def buildTrackEntry(self, trackResponse):
-		track = trackResponse['track']
-		albumUri = track['album']['uri']
-		row = TrackListRow(track['id'], track['uri'], albumUri = albumUri)
+	def __buildGenericEntry(self, entry, imageResponses, uri, labelText, desiredCoverSize = 60):
 		hbox = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL)
-		imageResponses = track['album']['images']
 
-		desired_size = 60
-		imageUrl = get_desired_image_for_size(desired_size, imageResponses)
+		imageUrl = get_desired_image_for_size(desiredCoverSize, imageResponses)
 
 		coverArt = self.coverArtLoader.getLoadingImage()
 		hbox.pack_start(coverArt, False, True, 5)
-		self.coverArtLoader.asyncUpdateCover(coverArt, url=imageUrl, uri=albumUri, dimensions=Dimensions(desired_size, desired_size, True))
-		trackNameString = track['name']
+		self.coverArtLoader.asyncUpdateCover(coverArt, url=imageUrl, uri=uri, dimensions=Dimensions(desiredCoverSize, desiredCoverSize, True))
+		label = Gtk.Label(xalign=0)
+		label.set_max_width_chars(32)
+		label.set_line_wrap(True)
+		label.set_lines(2)
+		label.set_line_wrap_mode(Pango.WrapMode.WORD_CHAR);
+		label.set_markup(labelText)
+		hbox.pack_end(label, True, True, 0)
+		entry.add(hbox)
+		return entry
+
+	def buildTrackEntry(self, trackResponse):
+		albumUri = trackResponse['album']['uri']
+		row = TrackListRow(trackResponse['id'], trackResponse['uri'], albumUri = albumUri)
+		imageResponses = trackResponse['album']['images']
+
+		trackNameString = trackResponse['name']
 		artistString = reduce(lambda a, b: {'name': a['name'] + ", " + b['name']},
-					track['artists'][1:],
-					track['artists'][0]
+					trackResponse['artists'][1:],
+					trackResponse['artists'][0]
 					)['name']
 		trackLabelString = '<b>' + GLib.markup_escape_text(trackNameString) + '</b>' + '\n' + GLib.markup_escape_text(artistString)
-		trackLabel = Gtk.Label(xalign=0)
-		trackLabel.set_max_width_chars(32)
-		trackLabel.set_line_wrap(True)
-		trackLabel.set_line_wrap_mode(Pango.WrapMode.WORD_CHAR);
-		trackLabel.set_markup(trackLabelString)
-		hbox.pack_end(trackLabel, True, True, 0)
-		row.add(hbox)
-		return row
+		return self.__buildGenericEntry(row, imageResponses, albumUri, trackLabelString)
+
+	def buildArtistEntry(self, artistResponse):
+		artistUri = artistResponse['uri']
+		row = Gtk.ListBoxRow()
+		imageResponses = artistResponse['images']
+		labelMarkup = '<b>' + GLib.markup_escape_text(artistResponse['name']) + '</b>' + '\n' + GLib.markup_escape_text(str(artistResponse['followers']['total']) + ' followers')
+		return self.__buildGenericEntry(row, imageResponses, artistUri, labelMarkup)
+
+	def buildEpisodeEntry(self, episodeResponse):
+		episodeUri = episodeResponse['uri']
+		row = Gtk.ListBoxRow()
+		imageResponses = episodeResponse['images']
+		labelMarkup = '<b>' + GLib.markup_escape_text(episodeResponse['name']) + '</b>' + '\n' + GLib.markup_escape_text(episodeResponse['description'])
+		return self.__buildGenericEntry(row, imageResponses, episodeUri, labelMarkup)
+
+	def buildShowEntry(self, showResponse):
+		showUri = showResponse['uri']
+		row = Gtk.ListBoxRow()
+		imageResponses = showResponse['images']
+		labelMarkup = '<b>' + GLib.markup_escape_text(showResponse['name']) + '</b>' + '\n' + GLib.markup_escape_text(showResponse['publisher'])
+		return self.__buildGenericEntry(row, imageResponses, showUri, labelMarkup)
+
+	def buildAlbumEntry(self, albumResponse):
+		albumUri = albumResponse['uri']
+		row = Gtk.ListBoxRow()
+		imageResponses = albumResponse['images']
+		artistString = reduce(lambda a, b: {'name': a['name'] + ", " + b['name']},
+					albumResponse['artists'][1:],
+					albumResponse['artists'][0]
+					)['name']
+		labelMarkup = '<b>' + GLib.markup_escape_text(albumResponse['name']) + '</b>' + '\n' + GLib.markup_escape_text(artistString)
+		return self.__buildGenericEntry(row, imageResponses, albumUri, labelMarkup)
+
+	def buildPlaylistEntry(self, playlistResponse):
+		row = PlaylistsListRow(playlistResponse['id'], playlistResponse['uri'])
+		imageResponses = playlistResponse['images']
+
+		return self.__buildGenericEntry(row, imageResponses, playlistResponse['uri'], GLib.markup_escape_text(playlistResponse['name']))
+
+	def buildGenericList(self, genericList, response, entryBuildFunction):
+		for item in response['items']:
+			genericList.add(entryBuildFunction(item))
+		genericList.show_all()
+
+	def buildSearchResults(self, searchResultBox, searchResponse):
+		def _searchResultHelper(searchType, name, buildEntryFunction):
+			response = searchResponse[searchType]
+			resultBox = Gtk.Box(orientation=Gtk.Orientation.VERTICAL)
+			if len(response['items']) != 0:
+				resultTitle = Gtk.Label(xalign=0)
+				resultTitle.set_markup('<b>' + name + '</b>')
+				resultBox.pack_start(resultTitle, False, True, 0)
+				resultsList = Gtk.ListBox()
+				GLib.idle_add(self.buildGenericList, resultsList, response, buildEntryFunction)
+				resultBox.pack_start(resultsList, False, True, 0)
+			else:
+				notFoundLabel = Gtk.Label(xalign=0)
+				notFoundLabel.set_markup('Could not find any ' + searchType + ' matching your search query...')
+				resultBox.pack_start(notFoundLabel, False, True, 0)
+			searchResultBox.pack_start(resultBox, False, True, 0)
+		# TODO also for playlist albums etc...
+		_searchResultHelper('tracks', 'Tracks', self.buildTrackEntry)
+		_searchResultHelper('artists', 'Artists', self.buildArtistEntry)
+		_searchResultHelper('albums', 'Albums', self.buildAlbumEntry)
+		_searchResultHelper('playlists', 'Playlists', self.buildPlaylistEntry)
+		_searchResultHelper('shows', 'Shows', self.buildShowEntry)
+		_searchResultHelper('episodes', 'Episodes', self.buildEpisodeEntry)
+		searchResultBox.show_all()
 
 	def asyncLoadPlaylistTracks(self, tracksList, playlistID, resumeEvent, stopEvent):
 		if self.currentPlaylistID == playlistID:
@@ -106,7 +177,7 @@ class SpotifyGuiBuilder:
 		# TODO use insert
 		def addTrackEntries(tracks):
 			for track in tracks:
-				trackEntry = self.buildTrackEntry(track)
+				trackEntry = self.buildTrackEntry(track['track'])
 				tracksList.add(trackEntry)
 			tracksList.show_all()
 

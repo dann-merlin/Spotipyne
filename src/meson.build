@@ -34,7 +34,7 @@ spotipyne_sources = [
   'backButton.py',
   'spotifyPlayback.py',
   'simpleControls.py',
-  # 'playbackState.py',
+  'searchOverview.py',
   'spotify.py',
   'config.py',
 ]
