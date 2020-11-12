@@ -30,20 +30,36 @@ class SearchOverview(Gtk.Box):
 	SearchBarEntry = Gtk.Template.Child()
 	SearchDeck = Gtk.Template.Child()
 
-	def __init__(self, GuiBuilder, **kwargs):
+	def __init__(self, GuiBuilder, backButton, **kwargs):
 		super().__init__(**kwargs)
 		self.GuiBuilder = GuiBuilder
+		self.BackButton = backButton
 		self.SearchBarEntry.connect("activate", self.search)
 		self.SearchBarEntry.set_placeholder_text("Search")
 		self.ScrolledWindow = Gtk.ScrolledWindow()
-		self.SearchResultsBox = Gtk.Box(orientation=Gtk.Orientation.VERTICAL)
+		self.SearchResultsBoxes = [Gtk.Box(orientation=Gtk.Orientation.VERTICAL)]
 		startSearchLabel = Gtk.Label("Input a search request and press enter...", xalign=0)
-		self.SearchResultsBox.pack_start(startSearchLabel, False, True, 0)
+		self.SearchResultsBoxes[0].pack_start(startSearchLabel, False, True, 0)
 		self.ScrolledWindow.add(self.SearchResultsBox)
 		self.SearchDeck.add(self.ScrolledWindow)
 		self.SearchOverlay = None
+
+		def onDecksVisibleChildChanged(deck, _):
+			if self.SearchDeck.get_visible_child() == self.ScrolledWindow:
+				self.BackButton.hide()
+			else:
+				self.BackButton.show()
+
+		self.SearchDeck.connect("notify::visible-child", onDecksVisibleChildChanged)
+
+		def onBackButtonClicked(button):
+			self.popFromSearchDeck()
+
+		self.BackButton.connect("clicked", onBackButtonClicked)
+
 		self.show_all()
 
+	# TODO use a stack like layout using the Deck instead
 	def __setNewResultsBox(self, newBox):
 		self.ScrolledWindow.remove(self.SearchResultsBox)
 		self.SearchResultsBox = newBox

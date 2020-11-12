@@ -29,6 +29,7 @@
       <object class="HdyDeck" id="SearchDeck">
         <property name="visible">True</property>
         <property name="can-focus">False</property>
+        <property name="can-swipe-back">True</property>
         <child>
           <placeholder/>
         </child>

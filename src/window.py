@@ -25,7 +25,6 @@ from .coverArtLoader import CoverArtLoader
 from .spotifyGuiBuilder import SpotifyGuiBuilder
 from .spotify import Spotify as sp
 from .spotifyPlayback import SpotifyPlayback
-from .backButton import BackButton
 from .simpleControls import SimpleControls
 from .searchOverview import SearchOverview
 
@@ -42,18 +41,12 @@ class SpotipyneWindow(Handy.ApplicationWindow):
 	PlaylistsList = Gtk.Template.Child()
 	PlaylistTracks = Gtk.Template.Child()
 	PlaylistTracksList = Gtk.Template.Child()
-	BackButtonBox = Gtk.Template.Child()
-	backButtonPlaylistsOverview = BackButton()
+	BackButtonStack = Gtk.Template.Child()
+	BackButtonPlaylists = Gtk.Template.Child()
+	BackButtonSearch = Gtk.Template.Child()
 	SimpleControlsParent = Gtk.Template.Child()
 	Revealer = Gtk.Template.Child()
 	RevealButton = Gtk.Template.Child()
-
-	def onPlaylistOverviewBackButtonClicked(self, button):
-		self.PlaylistsOverview.set_visible_child_name("0")
-
-	def onPlaylistTracksListRowActivated(self, PlaylistTracksList, TrackRow):
-		uri = self.PlaylistsList.get_selected_row().getUri()
-		sp.start_playback(context_uri=uri, offset={ "uri": TrackRow.getUri() })
 
 	def onPlaylistsListRowActivated(self, PlaylistsList, PlaylistRow):
 		self.TracksListStopEvent.set()
@@ -61,7 +54,7 @@ class SpotipyneWindow(Handy.ApplicationWindow):
 		self.TracksListResumeEvent.clear()
 		self.TracksListStopEvent.clear()
 		self.spGUI.asyncLoadPlaylistTracks(self.PlaylistTracksList, PlaylistRow.getUri().split(":")[-1], self.TracksListResumeEvent, self.TracksListStopEvent)
-		self.PlaylistsOverview.set_visible_child_name("1")
+		self.PlaylistsOverview.set_visible_child(self.PlaylistTracks)
 
 	def toggleReveal(self, button):
 		self.Revealer.set_reveal_child( not self.Revealer.get_reveal_child())
@@ -73,17 +66,6 @@ class SpotipyneWindow(Handy.ApplicationWindow):
 		self.coverArtLoader = CoverArtLoader()
 
 	def initPlaylistsOverview(self):
-		def initBackButton():
-			self.BackButtonBox.remove(self.BackButtonBox.get_children()[0])
-			self.backButtonPlaylistsOverview.visible_child_add_activation_widget(self.PlaylistTracks)
-			self.backButtonPlaylistsOverview.visible_child_add_deactivation_widget(self.Playlists)
-			self.backButtonPlaylistsOverview.addRequirement(self.playlist_tracks_focused)
-			self.BackButtonBox.add(self.backButtonPlaylistsOverview)
-			self.PlaylistsOverview.bind_property("visible-child", self.backButtonPlaylistsOverview, "visible_child_fake", GObject.BindingFlags.SYNC_CREATE)
-			self.PlaylistsOverview.bind_property("folded", self.backButtonPlaylistsOverview, "visible", GObject.BindingFlags.SYNC_CREATE)
-			self.backButtonPlaylistsOverview.connect("clicked", self.onPlaylistOverviewBackButtonClicked)
-			self.PlaylistTracksList.connect("row-activated", self.onPlaylistTracksListRowActivated)
-			self.backButtonPlaylistsOverview.set_property("active", self.PlaylistsOverview.get_folded())
 
 		def initLists():
 			self.TracksListStopEvent = threading.Event()
@@ -93,7 +75,33 @@ class SpotipyneWindow(Handy.ApplicationWindow):
 			self.spGUI.asyncLoadPlaylists(self.PlaylistsList)
 
 		initLists()
-		initBackButton()
+
+		def onFoldedChange(playlistsOverview, _):
+			# For some reason the folded variable can not be trusted
+			if playlistsOverview.get_folded():
+				if playlistsOverview.get_visible_child() == self.Playlists:
+					self.BackButtonPlaylists.hide()
+				else:
+					self.BackButtonPlaylists.show()
+			else:
+				self.BackButtonPlaylists.hide()
+
+		def onChildSwitched(playlistsOverview, _):
+			if playlistsOverview.get_visible_child() == self.Playlists:
+				self.BackButtonPlaylists.hide()
+			else:
+				if playlistsOverview.get_folded():
+					self.BackButtonPlaylists.show()
+				else:
+					self.BackButtonPlaylists.hide()
+
+		def onClickedBackButton(backButton):
+			self.PlaylistsOverview.set_visible_child(self.Playlists)
+
+		self.PlaylistsOverview.connect("notify::folded", onFoldedChange)
+		self.PlaylistsOverview.connect("notify::visible-child", onChildSwitched)
+		self.BackButtonPlaylists.connect("clicked", onClickedBackButton)
+
 
 	def initSpotifyPlayback(self):
 		self.spotifyPlayback = SpotifyPlayback(self.coverArtLoader)
@@ -104,9 +112,13 @@ class SpotipyneWindow(Handy.ApplicationWindow):
 		self.simpleControls.set_reveal_child(False)
 
 	def initSearchOverview(self):
-		self.searchOverview = SearchOverview(self.spGUI)
+		self.searchOverview = SearchOverview(self.spGUI, self.BackButtonSearch)
 		self.MainStack.add_titled(self.searchOverview, 'Search', 'Search')
 		self.MainStack.child_set_property(self.searchOverview, "icon-name", "edit-find-symbolic")
+
+	def initBackButtons(self):
+		self.BackButtonStack.child_set_property
+		self.MainStack.bind_property("visible-child-name", self.BackButtonStack, "visible-child-name")
 
 	def __init__(self, **kwargs):
 		super().__init__(**kwargs)
@@ -122,6 +134,8 @@ class SpotipyneWindow(Handy.ApplicationWindow):
 		self.initSpotifyPlayback()
 
 		self.initSimpleControls()
+
+		self.initBackButtons()
 
 		self.HeaderbarSwitcher.bind_property("title-visible", self.BottomSwitcher, "reveal", GObject.BindingFlags.SYNC_CREATE)
 

@@ -29,27 +29,68 @@
               </object>
             </child>
             <child>
-              <object class="GtkButtonBox" id="BackButtonBox">
+              <object class="GtkStack" id="BackButtonStack">
                 <property name="visible">True</property>
                 <property name="can-focus">False</property>
-                <property name="homogeneous">True</property>
-                <property name="layout-style">expand</property>
                 <child>
-                  <object class="GtkButton">
-                    <property name="can-focus">True</property>
-                    <property name="receives-default">True</property>
+                  <object class="GtkButtonBox" id="BackButtonBoxPlaylists">
+                    <property name="visible">True</property>
+                    <property name="can-focus">False</property>
+                    <property name="homogeneous">True</property>
+                    <property name="layout-style">expand</property>
                     <child>
-                      <object class="GtkImage">
-                        <property name="visible">True</property>
-                        <property name="can-focus">False</property>
-                        <property name="icon-name">go-previous-symbolic.symbolic</property>
+                      <object class="GtkButton" id="BackButtonPlaylists">
+                        <property name="can-focus">True</property>
+                        <property name="receives-default">True</property>
+                        <child>
+                          <object class="GtkImage">
+                            <property name="visible">True</property>
+                            <property name="can-focus">False</property>
+                            <property name="icon-name">go-previous-symbolic.symbolic</property>
+                          </object>
+                        </child>
                       </object>
+                      <packing>
+                        <property name="expand">False</property>
+                        <property name="fill">False</property>
+                        <property name="position">0</property>
+                      </packing>
                     </child>
                   </object>
                   <packing>
-                    <property name="expand">False</property>
-                    <property name="fill">False</property>
-                    <property name="position">0</property>
+                    <property name="name">Playlists</property>
+                    <property name="title" translatable="yes">Playlists</property>
+                  </packing>
+                </child>
+                <child>
+                  <object class="GtkButtonBox" id="BackButtonBoxSearch">
+                    <property name="visible">True</property>
+                    <property name="can-focus">False</property>
+                    <property name="homogeneous">True</property>
+                    <property name="layout-style">expand</property>
+                    <child>
+                      <object class="GtkButton" id="BackButtonSearch">
+                        <property name="can-focus">True</property>
+                        <property name="receives-default">True</property>
+                        <child>
+                          <object class="GtkImage">
+                            <property name="visible">True</property>
+                            <property name="can-focus">False</property>
+                            <property name="icon-name">go-previous-symbolic.symbolic</property>
+                          </object>
+                        </child>
+                      </object>
+                      <packing>
+                        <property name="expand">False</property>
+                        <property name="fill">False</property>
+                        <property name="position">0</property>
+                      </packing>
+                    </child>
+                  </object>
+                  <packing>
+                    <property name="name">Search</property>
+                    <property name="title" translatable="yes">Search</property>
+                    <property name="position">1</property>
                   </packing>
                 </child>
               </object>
@@ -201,9 +242,6 @@
                       </packing>
                     </child>
                     <child>
-                      <placeholder/>
-                    </child>
-                    <child>
                       <object class="GtkBox" id="TestPage">
                         <property name="visible">True</property>
                         <property name="can-focus">False</property>
@@ -251,7 +289,7 @@
                         <property name="name">Unused</property>
                         <property name="title" translatable="yes">Unused</property>
                         <property name="icon-name">multimedia-volume-control-symbolic</property>
-                        <property name="position">2</property>
+                        <property name="position">1</property>
                       </packing>
                     </child>
                   </object>
