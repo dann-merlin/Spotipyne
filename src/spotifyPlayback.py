@@ -119,10 +119,6 @@ class SpotifyPlayback(GObject.Object):
 	def has_playback(self, has_playback):
 		pass
 
-	@GObject.Signal
-	def devices_changed(self):
-		print("devices_changed emitted!")
-
 	def set_current_cover_art(self, image, dim=None):
 		if dim is None:
 			dim = Dimensions(self.desired_size, self.desired_size, True)
