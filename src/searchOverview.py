@@ -44,12 +44,23 @@ class SearchOverview(Gtk.Box):
 		self.ScrolledWindow.add(self.SearchResultsBox)
 		self.SearchDeck.add(self.ScrolledWindow)
 
+		def onDeckTransitionRunning(deck, _):
+			if len(self.SearchDeckStack) == 0:
+				return
+			if not deck.get_transition_running():
+				visible_child = deck.get_visible_child()
+				while visible_child != self.SearchDeckStack[-1]:
+					deck.remove(self.SearchDeckStack.pop())
+					if len(self.SearchDeckStack) == 0:
+						return
+
 		def onDecksVisibleChildChanged(deck, _):
 			if self.SearchDeck.get_visible_child() == self.ScrolledWindow:
 				self.BackButton.hide()
 			else:
 				self.BackButton.show()
 
+		self.SearchDeck.connect("notify::transition-running", onDeckTransitionRunning)
 		self.SearchDeck.connect("notify::visible-child", onDecksVisibleChildChanged)
 
 		def onBackButtonClicked(button):
@@ -70,13 +81,6 @@ class SearchOverview(Gtk.Box):
 			self.SearchDeck.set_visible_child(self.ScrolledWindow)
 		else:
 			self.SearchDeck.set_visible_child(self.SearchDeckStack[-2])
-		connectionID = 0
-		def onTransitionRunning(deck, _):
-			if not deck.get_transition_running():
-				deck.disconnect(connectionID)
-				deck.remove(self.SearchDeckStack.pop())
-
-		connectionID = self.SearchDeck.connect("notify::transition-running", onTransitionRunning)
 
 	def pushOverlay(self, newBox):
 		scrolledWrapper = Gtk.ScrolledWindow()
