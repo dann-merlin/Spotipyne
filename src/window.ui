@@ -121,17 +121,17 @@
                     <property name="can-focus">False</property>
                     <property name="transition-type">slide-left-right</property>
                     <child>
-                      <object class="HdyLeaflet" id="PlaylistsOverview">
+                      <object class="HdyLeaflet" id="LibraryOverview">
                         <property name="visible">True</property>
                         <property name="can-focus">False</property>
                         <property name="hhomogeneous-folded">False</property>
-                        <property name="visible-child">Playlists</property>
+                        <property name="visible-child">PrimaryBox</property>
                         <property name="visible-child-name">0</property>
                         <property name="transition-type">under</property>
                         <property name="interpolate-size">True</property>
                         <property name="can-swipe-back">True</property>
                         <child>
-                          <object class="GtkBox" id="Playlists">
+                          <object class="GtkBox" id="PrimaryBox">
                             <property name="visible">True</property>
                             <property name="can-focus">False</property>
                             <property name="hexpand">False</property>
@@ -150,7 +150,7 @@
                               </packing>
                             </child>
                             <child>
-                              <object class="GtkScrolledWindow">
+                              <object class="GtkScrolledWindow" id="PrimaryViewport">
                                 <property name="visible">True</property>
                                 <property name="can-focus">True</property>
                                 <property name="hexpand">False</property>
@@ -184,7 +184,7 @@
                           </packing>
                         </child>
                         <child>
-                          <object class="GtkBox" id="PlaylistTracks">
+                          <object class="GtkBox" id="SecondaryBox">
                             <property name="visible">True</property>
                             <property name="can-focus">False</property>
                             <property name="hexpand">True</property>
@@ -210,7 +210,7 @@
                                 <property name="shadow-type">in</property>
                                 <property name="propagate-natural-width">True</property>
                                 <child>
-                                  <object class="GtkViewport">
+                                  <object class="GtkViewport" id="SecondaryViewport">
                                     <property name="visible">True</property>
                                     <property name="can-focus">False</property>
                                     <child>

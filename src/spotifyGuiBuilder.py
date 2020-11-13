@@ -73,6 +73,41 @@ class SpotifyGuiBuilder:
 		self.coverArtLoader = coverArtLoader
 		self.currentPlaylistID = ''
 
+	def getPlaylistTracks(self, playlist_id):
+		allTracks = []
+		offset = 0
+		pageSize = 100
+		keepGoing = True
+		while keepGoing:
+			tracksResponse = sp.get().playlist_tracks(
+				playlist_id=playlist_id,
+				fields='items(track(uri,id,name,artists(name),album(id,uri,images))),next',
+				limit=pageSize,
+				offset=offset)
+			keepGoing = tracksResponse['next'] != None
+			offset += pageSize
+			allTracks += tracksResponse['items']
+		return allTracks
+
+	def loadTracksList(self, tracks_list, tracks):
+		def loadChunk(chunk):
+			for track in chunk:
+				entry = self.buildTrackEntry(track['track'])
+				tracks_list.insert(entry, -1)
+			tracks_list.show_all()
+
+		def chunks(l, n):
+			for i in range(0, len(l), n):
+				yield l[i:i+n]
+
+		for chunk in chunks(tracks, 10):
+			GLib.idle_add(loadChunk, chunk, priority=GLib.PRIORITY_LOW)
+			time.sleep(1)
+
+	def loadPlaylistTracksList(self, playlist_tracks_list, playlist_id):
+		playlist_tracks = self.getPlaylistTracks(playlist_id)
+		self.loadTracksList(playlist_tracks_list, playlist_tracks)
+
 	def buildArtistPage(self, artist_uri):
 		vbox = Gtk.Box(orientation=Gtk.Orientation.VERTICAL)
 		vbox.pack_start(Gtk.Label("Artist " + artist_uri), False, True, 0)
@@ -86,8 +121,51 @@ class SpotifyGuiBuilder:
 		return vbox
 
 	def buildPlaylistPage(self, playlist_uri):
+		playlist_id=playlist_uri.split(':')[-1]
 		vbox = Gtk.Box(orientation=Gtk.Orientation.VERTICAL)
-		vbox.pack_start(Gtk.Label("Playlist " + playlist_uri), False, True, 0)
+		playlist_image = self.coverArtLoader.getLoadingImage()
+		label = Gtk.Label(xalign=0)
+		playlist_tracks_list = Gtk.ListBox()
+		vbox.pack_start(playlist_image, False, True, 0)
+		vbox.pack_start(label, False, True, 0)
+		vbox.pack_start(playlist_tracks_list, False, True, 0)
+		def onPlaylistTracksListRowActivated(listbox, row):
+			def helper():
+				print("Playlist URI: " + str(playlist_uri))
+				print("Track URI: " + str(row.getUri()))
+				sp.start_playback(context_uri=playlist_uri, offset={"uri": row.getUri()})
+			sp_thread = threading.Thread(daemon=True, target=helper)
+			sp_thread.start()
+
+		playlist_tracks_list.connect('row-activated', onPlaylistTracksListRowActivated)
+
+		def loadPlaylistPage():
+			def loadLabelAndImage():
+				playlist_info_response = sp.get().playlist(
+					playlist_id,
+					fields='name,images,followers(total),owner(display_name)'
+				)
+				playlist_cover_size_big = 128
+				image_url = get_desired_image_for_size(playlist_cover_size_big, playlist_info_response['images'])
+				self.coverArtLoader.asyncUpdateCover(playlist_image, playlist_uri, image_url, dimensions=Dimensions(playlist_cover_size_big, playlist_cover_size_big, True))
+
+				def buildPlaylistLabel():
+					markup_string = '<b>' + GLib.markup_escape_text(playlist_info_response['name']) + '</b>'
+					markup_string += '\n'
+					markup_string += 'by ' + GLib.markup_escape_text(playlist_info_response['owner']['display_name'])
+					followers_total = playlist_info_response['followers']['total']
+					if followers_total > 1:
+						markup_string += ' - ' + str(followers_total) + ' followers'
+					label.set_markup(markup_string)
+					label.show_all()
+
+				GLib.idle_add(buildPlaylistLabel, priority=GLib.PRIORITY_LOW)
+
+			thread_label = threading.Thread(daemon=True, target=loadLabelAndImage)
+			thread_label.start()
+			thread_tracks = threading.Thread(daemon=True, target=self.loadPlaylistTracksList, args=(playlist_tracks_list, playlist_id))
+			thread_tracks.start()
+		loadPlaylistPage()
 		vbox.show_all()
 		return vbox
 
@@ -231,64 +309,6 @@ class SpotifyGuiBuilder:
 		for searchQuery in searchQueries:
 			_searchResultHelper(searchQuery['type'], searchQuery['name'], searchQuery['buildEntryFunction'], searchQuery['activationHandler'])
 		searchResultBox.show_all()
-
-	def asyncLoadPlaylistTracks(self, tracksList, playlistID, resumeEvent, stopEvent):
-		if self.currentPlaylistID == playlistID:
-			resumeEvent.set()
-			return
-		self.currentPlaylistID = playlistID
-
-		sem = threading.Semaphore(0)
-
-		def removeOldPlaylist():
-			for child in tracksList.get_children():
-				tracksList.remove(child)
-				# TODO
-				# self.coverArtLoader.forget_image(child.getAlbumUri())
-			sem.release()
-		GLib.idle_add(removeOldPlaylist, priority=GLib.PRIORITY_LOW)
-
-		# TODO use insert
-		def addTrackEntries(tracks):
-			for track in tracks:
-				trackEntry = self.buildTrackEntry(track['track'])
-				tracksList.add(trackEntry)
-			tracksList.show_all()
-
-		def loadPlaylistTracks():
-			allTracks = []
-			offset = 0
-			pageSize = 100
-			keepGoing = True
-			while keepGoing:
-				tracksResponse = sp.get().playlist_tracks(
-					playlist_id=playlistID,
-					fields='items(track(uri,id,name,artists(name),album(id,uri,images))),next',
-					limit=pageSize,
-					offset=offset)
-				keepGoing = tracksResponse['next'] != None
-				offset += pageSize
-				allTracks += tracksResponse['items']
-
-			def addAllTrackEntries():
-				def chunks(l, n):
-					for i in range(0, len(l), n):
-						yield l[i:i+n]
-				sem.acquire()
-				try:
-					for hugeChunk in chunks(allTracks, 50):
-						for trackChunk in chunks(hugeChunk, 10):
-							if stopEvent.is_set():
-								break
-							GLib.idle_add(addTrackEntries, trackChunk, priority=GLib.PRIORITY_LOW)
-						time.sleep(1)
-				finally:
-					resumeEvent.set()
-
-			addAllTrackEntries()
-
-		thread = threading.Thread(target=loadPlaylistTracks)
-		thread.start()
 
 	def asyncLoadPlaylists(self, playlistsList):
 		# TODO use insert
