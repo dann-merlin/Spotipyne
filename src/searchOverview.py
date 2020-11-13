@@ -59,7 +59,6 @@ class SearchOverview(Gtk.Box):
 
 		self.show_all()
 
-	# TODO use a stack like layout using the Deck instead
 	def __setNewOverlayBox(self, newBox):
 		self.ScrolledWindow.remove(self.SearchResultsBox)
 		self.SearchResultsBox = newBox
@@ -74,15 +73,18 @@ class SearchOverview(Gtk.Box):
 		connectionID = 0
 		def onTransitionRunning(deck, _):
 			if not deck.get_transition_running():
-				deck.remove(self.SearchDeckStack.pop())
 				deck.disconnect(connectionID)
+				deck.remove(self.SearchDeckStack.pop())
 
 		connectionID = self.SearchDeck.connect("notify::transition-running", onTransitionRunning)
 
 	def pushOverlay(self, newBox):
-		self.SearchDeckStack.append(newBox)
-		self.SearchDeck.add(newBox)
-		self.SearchDeck.set_visible_child(newBox)
+		scrolledWrapper = Gtk.ScrolledWindow()
+		scrolledWrapper.add(newBox)
+		self.SearchDeckStack.append(scrolledWrapper)
+		self.SearchDeck.add(scrolledWrapper)
+		scrolledWrapper.show_all()
+		self.SearchDeck.set_visible_child(scrolledWrapper)
 
 	def setSearchResults(self, widget):
 		for child in self.SearchDeck.get_children()[1:]:
