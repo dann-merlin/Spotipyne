@@ -87,26 +87,30 @@ class SpotifyGuiBuilder:
 			keepGoing = tracksResponse['next'] != None
 			offset += pageSize
 			allTracks += tracksResponse['items']
-		return allTracks
+		return [trackResponse['track'] for trackResponse in allTracks]
 
-	def loadTracksList(self, tracks_list, tracks):
+	def loadGenericList(self, generic_list, raw_data, buildEntryFunction):
 		def loadChunk(chunk):
-			for track in chunk:
-				entry = self.buildTrackEntry(track['track'])
-				tracks_list.insert(entry, -1)
-			tracks_list.show_all()
+			for raw_data_for_entry in chunk:
+				entry = buildEntryFunction(raw_data_for_entry)
+				generic_list.insert(entry, -1)
+			generic_list.show_all()
 
 		def chunks(l, n):
 			for i in range(0, len(l), n):
 				yield l[i:i+n]
 
-		for chunk in chunks(tracks, 10):
+		def setListboxAttributes(listbox):
+			listbox.set_selection_mode(Gtk.SelectionMode.NONE)
+		GLib.idle_add(setListboxAttributes, generic_list)
+
+		for chunk in chunks(raw_data, 10):
 			GLib.idle_add(loadChunk, chunk, priority=GLib.PRIORITY_LOW)
 			time.sleep(1)
 
 	def loadPlaylistTracksList(self, playlist_tracks_list, playlist_id):
 		playlist_tracks = self.getPlaylistTracks(playlist_id)
-		self.loadTracksList(playlist_tracks_list, playlist_tracks)
+		self.loadGenericList(playlist_tracks_list, playlist_tracks, self.buildTrackEntry)
 
 	def buildArtistPage(self, artist_uri):
 		vbox = Gtk.Box(orientation=Gtk.Orientation.VERTICAL)
@@ -131,8 +135,6 @@ class SpotifyGuiBuilder:
 		vbox.pack_start(playlist_tracks_list, False, True, 0)
 		def onPlaylistTracksListRowActivated(listbox, row):
 			def helper():
-				print("Playlist URI: " + str(playlist_uri))
-				print("Track URI: " + str(row.getUri()))
 				sp.start_playback(context_uri=playlist_uri, offset={"uri": row.getUri()})
 			sp_thread = threading.Thread(daemon=True, target=helper)
 			sp_thread.start()
@@ -193,15 +195,15 @@ class SpotifyGuiBuilder:
 		entry.add(hbox)
 		return entry
 
-	def buildTrackEntry(self, trackResponse):
-		albumUri = trackResponse['album']['uri']
-		row = TrackRow(uri=trackResponse['uri'])
-		imageResponses = trackResponse['album']['images']
+	def buildTrackEntry(self, track):
+		albumUri = track['album']['uri']
+		row = TrackRow(uri=track['uri'])
+		imageResponses = track['album']['images']
 
-		trackNameString = trackResponse['name']
+		trackNameString = track['name']
 		artistString = reduce(lambda a, b: {'name': a['name'] + ", " + b['name']},
-					trackResponse['artists'][1:],
-					trackResponse['artists'][0]
+					track['artists'][1:],
+					track['artists'][0]
 					)['name']
 		trackLabelString = '<b>' + GLib.markup_escape_text(trackNameString) + '</b>' + '\n' + GLib.markup_escape_text(artistString)
 		return self.__buildGenericEntry(row, imageResponses, albumUri, trackLabelString)
@@ -244,11 +246,6 @@ class SpotifyGuiBuilder:
 		imageResponses = playlistResponse['images']
 		return self.__buildGenericEntry(row, imageResponses, playlistUri, GLib.markup_escape_text(playlistResponse['name']))
 
-	def buildGenericList(self, genericList, response, entryBuildFunction):
-		for item in response['items']:
-			genericList.add(entryBuildFunction(item))
-		genericList.show_all()
-
 	def buildSearchResults(self, searchResultBox, searchResponse, setSearchOverlayFunction):
 		def _searchResultHelper(searchType, name, buildEntryFunction, activationHandler):
 			response = searchResponse[searchType]
@@ -259,7 +256,8 @@ class SpotifyGuiBuilder:
 			if len(response['items']) != 0:
 				resultsList = Gtk.ListBox()
 				resultsList.connect("row-activated", activationHandler)
-				GLib.idle_add(self.buildGenericList, resultsList, response, buildEntryFunction)
+				list_loader_thread = threading.Thread(daemon=True, target=self.loadGenericList, args=(resultsList, response['items'], buildEntryFunction))
+				list_loader_thread.start()
 				resultBox.pack_start(resultsList, False, True, 0)
 				searchResultBox.pack_start(resultBox, False, True, 0)
 			else:
