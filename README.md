@@ -25,6 +25,7 @@ Not a lot yet. But here's a short list:
 - show playlist covers
 - show album covers
 - show progress bar
+- search (playlists and tracks only really work yet)
 
 # How can I use it?
 
