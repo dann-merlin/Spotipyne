@@ -35,6 +35,7 @@ spotipyne_sources = [
   'simpleControls.py',
   'searchOverview.py',
   'spotify.py',
+  'login.py',
   'config.py',
 ]
 

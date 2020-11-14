@@ -108,8 +108,6 @@
             <property name="can-focus">False</property>
             <property name="orientation">vertical</property>
             <property name="transition-duration">500</property>
-            <property name="can-swipe-back">True</property>
-            <property name="can-swipe-forward">True</property>
             <child>
               <object class="GtkBox" id="SimpleControlsParent">
                 <property name="visible">True</property>

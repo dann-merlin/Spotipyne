@@ -27,6 +27,7 @@ from .spotify import Spotify as sp
 from .spotifyPlayback import SpotifyPlayback
 from .simpleControls import SimpleControls
 from .searchOverview import SearchOverview
+from .login import Login
 
 @Gtk.Template(resource_path='/xyz/merlinx/Spotipyne/window.ui')
 class SpotipyneWindow(Handy.ApplicationWindow):
@@ -35,6 +36,7 @@ class SpotipyneWindow(Handy.ApplicationWindow):
 	Handy.init()
 	HeaderbarSwitcher = Gtk.Template.Child()
 	BottomSwitcher = Gtk.Template.Child()
+	PlayerDeck = Gtk.Template.Child()
 	MainStack = Gtk.Template.Child()
 	LibraryOverview = Gtk.Template.Child()
 	PrimaryBox = Gtk.Template.Child()
@@ -107,7 +109,6 @@ class SpotipyneWindow(Handy.ApplicationWindow):
 		self.LibraryOverview.connect("notify::visible-child", onChildSwitched)
 		self.BackButtonPlaylists.connect("clicked", onClickedBackButton)
 
-
 	def initSpotifyPlayback(self):
 		self.spotifyPlayback = SpotifyPlayback(self.coverArtLoader)
 
@@ -125,10 +126,21 @@ class SpotipyneWindow(Handy.ApplicationWindow):
 		self.BackButtonStack.child_set_property
 		self.MainStack.bind_property("visible-child-name", self.BackButtonStack, "visible-child-name")
 
+	def initLogin(self):
+		self.LoginPage = Login(self.onLoggedIn)
+		self.PlayerDeck.add(self.LoginPage)
+		self.PlayerDeck.set_visible_child(self.LoginPage)
+		self.PlayerDeck.show_all()
+
 	def __init__(self, **kwargs):
 		super().__init__(**kwargs)
 
+		self.initLogin()
 
+	def onLoggedIn(self):
+
+		self.PlayerDeck.remove(self.LoginPage)
+		self.PlayerDeck.set_visible_child(self.PlayerDeck.get_children()[0])
 
 		self.initCoverArtLoader()
 
