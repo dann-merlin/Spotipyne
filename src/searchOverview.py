@@ -27,18 +27,18 @@ from .coverArtLoader import Dimensions
 class SearchOverview(Gtk.Box):
 	__gtype_name__ = 'SearchOverview'
 
-	SearchBarEntry = Gtk.Template.Child()
+	SearchEntry = Gtk.Template.Child()
 	SearchDeck = Gtk.Template.Child()
 
 	def __init__(self, GuiBuilder, backButton, **kwargs):
 		super().__init__(**kwargs)
 		self.GuiBuilder = GuiBuilder
 		self.BackButton = backButton
-		self.SearchBarEntry.connect("activate", self.search)
-		self.SearchBarEntry.set_placeholder_text("Search")
+		self.SearchEntry.connect("activate", self.search)
+		self.SearchEntry.connect("search-changed", self.search)
 		self.ScrolledWindow = Gtk.ScrolledWindow()
 		self.SearchResultsBox = Gtk.Box(orientation=Gtk.Orientation.VERTICAL)
-		startSearchLabel = Gtk.Label("Input a search request and press enter...", xalign=0)
+		startSearchLabel = Gtk.Label("Input a search request and press enter...")
 		self.SearchResultsBox.pack_start(startSearchLabel, False, True, 0)
 		self.SearchDeckStack = []
 		self.ScrolledWindow.add(self.SearchResultsBox)

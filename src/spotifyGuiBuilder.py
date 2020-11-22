@@ -128,7 +128,7 @@ class SpotifyGuiBuilder:
 		playlist_id=playlist_uri.split(':')[-1]
 		vbox = Gtk.Box(orientation=Gtk.Orientation.VERTICAL)
 		playlist_image = self.coverArtLoader.getLoadingImage()
-		label = Gtk.Label(xalign=0)
+		label = Gtk.Label(xalign=0.04)
 		playlist_tracks_list = Gtk.ListBox()
 		vbox.pack_start(playlist_image, False, True, 0)
 		vbox.pack_start(label, False, True, 0)

@@ -11,6 +11,9 @@ add All songs to Library
 add Spotify created playlists
 Add More controls on clicking on the simple controls panel
 Add playlist description above Playlistracks
+Add search completion with previous searches.
+Save searched terms to file only before exiting
+Regurlarly Update search results without pressing enter (connect to signal of searchentry)
 
 Future (first get real features done):
 find out why app is still unreactive while loading a playlist
