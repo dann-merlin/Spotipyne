@@ -26,6 +26,7 @@ Not a lot yet. But here's a short list:
 - show album covers
 - show progress bar
 - search (playlists and tracks only really work yet)
+- save/unsave the current track
 
 # How can I use it?
 
