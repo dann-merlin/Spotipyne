@@ -16,6 +16,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import threading
+from spotipy import SpotifyException
 
 from gi.repository import GObject, Gtk, GLib, Gio
 
@@ -31,8 +32,7 @@ class SimpleControls(Gtk.Revealer):
 
 		def __init__(self, spotifyPlayback, **kwargs):
 			super().__init__(**kwargs)
-			self.pb = spotifyPlayback
-			self.pb.connect("is_playing_changed", self.updateLabel)
+			spotifyPlayback.connect("is_playing_changed", self.updateLabel)
 			self.connect("clicked", self.on_clicked)
 			self.show()
 			self.__is_playing = False
@@ -56,7 +56,48 @@ class SimpleControls(Gtk.Revealer):
 				else:
 					sp.start_playback()
 
-			thread = threading.Thread(target=to_bg)
+			thread = threading.Thread(daemon=True, target=to_bg)
+			thread.start()
+
+	class SaveTrackButton(Gtk.Button):
+
+		def __init__(self, spotifyPlayback, **kwargs):
+			super().__init__(**kwargs)
+			self.show()
+			self.__is_saved_track = False
+			self.remove_saved_icon_image = Gtk.Image.new_from_icon_name("list-remove-symbolic.symbolic", Gtk.IconSize.LARGE_TOOLBAR)
+			self.add_saved_icon_image = Gtk.Image.new_from_icon_name("list-add-symbolic.symbolic", Gtk.IconSize.LARGE_TOOLBAR)
+			self.set_image(self.add_saved_icon_image)
+			spotifyPlayback.connect("is_saved_track_changed", self.updateIcon)
+			self.connect("clicked", self.on_clicked, spotifyPlayback)
+
+		def updateIcon(self, spotifyPlayback, is_saved_track):
+			self.__is_saved_track = is_saved_track
+			def to_main_thread():
+				if is_saved_track:
+					print("setting remove image")
+					self.set_image(self.remove_saved_icon_image)
+				else:
+					print("setting add image")
+					self.set_image(self.add_saved_icon_image)
+			GLib.idle_add(to_main_thread)
+
+		def on_clicked(self, _, spotifyPlayback):
+			def to_bg():
+				print("clicked fav button")
+				try:
+					current_track_uri = spotifyPlayback.track_uri
+					saved = self.__is_saved_track
+					if saved:
+						print("remove!")
+						sp.get().current_user_saved_tracks_delete([current_track_uri])
+					else:
+						print("add!")
+						sp.get().current_user_saved_tracks_add([current_track_uri])
+					spotifyPlayback.emit("is_saved_track_changed", not saved)
+				except SpotifyException as e:
+					print(str(e))
+			thread = threading.Thread(daemon=True, target=to_bg)
 			thread.start()
 
 	class SimpleProgressBar(Gtk.ProgressBar):
@@ -120,7 +161,7 @@ class SimpleControls(Gtk.Revealer):
 		devices_button.set_popover(self.devices_popover)
 		devices_button.set_direction(Gtk.ArrowType.UP)
 		devices_button.set_image(Gtk.Image.new_from_icon_name("multimedia-player-symbolic.symbolic", Gtk.IconSize.LARGE_TOOLBAR))
-		heart_button = Gtk.Button.new_from_icon_name("emblem-favorite-symbolic.symbolic", Gtk.IconSize.LARGE_TOOLBAR)
+		heart_button = self.SaveTrackButton(spotifyPlayback)
 		play_button = self.PlaybackButton(spotifyPlayback)
 		self.buttons = Gtk.ButtonBox(Gtk.Orientation.HORIZONTAL)
 
@@ -165,3 +206,4 @@ class SimpleControls(Gtk.Revealer):
 	def on_track_changed(self, spotifyPlayback, track_uri):
 		spotifyPlayback.set_current_cover_art(self.coverArt, Dimensions(60,60,True))
 		self.updateSongLabel(spotifyPlayback)
+
