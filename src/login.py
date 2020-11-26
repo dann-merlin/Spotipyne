@@ -17,15 +17,43 @@
 
 from gi.repository import Gtk, GLib
 
+from selenium import webdriver
+from selenium.webdriver.common.keys import Keys
+from selenium.webdriver.common.by import By
+from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.support import expected_conditions
+from selenium.common.exceptions import WebDriverException
+
+import threading
+import os
+from .spotify import Spotify as sp
+import spotipy
+
 @Gtk.Template(resource_path='/xyz/merlinx/Spotipyne/login.ui')
 class Login(Gtk.Bin):
 	__gtype_name__ = 'Login'
 
 	LoginListBox = Gtk.Template.Child()
 
+	LOCAL_SOCKET_PATH = "/tmp/spotipyne_login_url_socket"
+
 	def __init__(self, onLoggedIn, **kwargs):
 		super().__init__(**kwargs)
-		self.buttonCallback = onLoggedIn
+		if self.canLogIn():
+			GLib.idle_add(onLoggedIn)
+			return
+
+		try:
+			sp.delete_cached_token()
+		except FileNotFoundError:
+			pass
+
+		def installTrapBrowser():
+			import webbrowser
+			webbrowser.register(name="echo", klass=None, instance=webbrowser.Mozilla("echo"), preferred=True)
+		installTrapBrowser()
+
+		self.onLoggedIn = onLoggedIn
 		self.SubmitButton = Gtk.Button("Submit")
 		username_label = Gtk.Label('Username: ')
 		username_input = Gtk.Entry()
@@ -49,6 +77,107 @@ class Login(Gtk.Bin):
 		self.LoginListBox.add(self.SubmitButton)
 		self.show_all()
 		def onButtonPressed(button):
-			GLib.idle_add(self.buttonCallback)
+			def readInputsAndStartLoginThread():
+				threading.Thread(daemon=True, target=self.loginWithSelenium, args=(username_input.get_text(), password_input.get_text())).start()
+			GLib.idle_add(readInputsAndStartLoginThread)
 		self.SubmitButton.connect("clicked", onButtonPressed)
 
+	def canLogIn(self):
+		try:
+			auth_manager = sp.build_auth_manager()
+		except Exception as e:
+			# Probably username is not cached
+			return False
+		cached_token = auth_manager.get_cached_token()
+		if cached_token is None:
+			return False
+		if auth_manager.is_token_expired(cached_token):
+			# get_cached_token already tries to refresh the token if it is expired.
+			# No need to try again.
+			return False
+		return True
+
+	def loginWithSelenium(self, username, password):
+		sp.set_username_backup(username)
+		start_auth = threading.Semaphore()
+
+		def handleLoginRequest():
+			def receiveUrl():
+				import socket
+				with socket.socket(socket.AF_UNIX, socket.SOCK_STREAM) as sock:
+					try:
+						os.remove(self.LOCAL_SOCKET_PATH)
+					except FileNotFoundError:
+						pass
+					sock.bind(self.LOCAL_SOCKET_PATH)
+					sock.listen(3)
+					connection, address = sock.accept()
+					received_url = connection.recv(512).decode('utf-8')
+					return received_url
+
+			def getWebdriver():
+				try:
+					return webdriver.Firefox()
+				except:
+					print("Firefox driver (geckodriver) not installed", file=sys.stderr)
+				try:
+					return webdriver.Chrome()
+				except WebDriverException:
+					print("Chrome driver is not installed", file = sys.stderr)
+				try:
+					return webdriver.Safari()
+				except Exception:
+					print("Safari driver is not installed", file = sys.stderr)
+				try:
+					return webdriver.Ie()
+				except WebDriverException:
+					print("Internet Explorer driver is not installed", file = sys.stderr)
+				raise Exception("No installed Webdriver found")
+
+			def handleLoginPage(driver, url):
+				driver.get(url)
+				site_load_timeout = 3
+				def logIntoAccount():
+					WebDriverWait(driver, site_load_timeout).until(expected_conditions.element_to_be_clickable((By.ID, "login-button")))
+					driver.find_element_by_id("login-username").send_keys(username)
+					driver.find_element_by_id("login-password").send_keys(password)
+					driver.find_element_by_id("login-button").click()
+				def authorizeRequest():
+					def auth_cond(driver):
+						return ( "Authorize" in driver.title and driver.find_element_by_id("auth-accept") is not None) or "Authentication status: success" in driver.page_source
+
+					WebDriverWait(driver, site_load_timeout).until(auth_cond)
+					if "Authentication status: success" in driver.page_source:
+						print("Application is already authorized")
+					else:
+						try:
+							driver.find_element_by_id("auth-accept").click()
+							print("Authorization granted!")
+						except WebDriverException:
+							print("Failed to authorize on the spotify web page")
+
+				if "Login" in driver.title:
+					logIntoAccount()
+
+				WebDriverWait(driver, site_load_timeout).until_not(expected_conditions.title_contains("Login"))
+				authorizeRequest()
+				driver.quit()
+
+			start_auth.acquire(1)
+			url = sp.build_auth_manager().get_authorize_url()
+			try:
+				handleLoginPage(getWebdriver(), url)
+			except:
+				print("Failed logging in.")
+				# TODO try again somehow
+
+		def _login_browser():
+			sp.get().currently_playing()
+			start_auth.release()
+		threading.Thread(daemon=True, target=_login_browser).start()
+
+		handleLoginRequest()
+
+		sp.save_username_to_cache(username)
+
+		GLib.idle_add(self.onLoggedIn)

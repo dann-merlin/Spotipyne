@@ -1,3 +1,4 @@
 PyGObject >= 3.36
 spotipy
 pyxdg
+selenium

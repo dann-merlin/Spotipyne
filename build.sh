@@ -33,6 +33,7 @@ as_flatpak() { # not working I believe
 as_bin() {
 	check_installed_bin "meson"
 	check_installed_bin "ninja"
+	check_installed_bin "geckodriver"
 	check_installed_bin "gettext"
 	check_installed_lib "libhandy-1"
 	check_installed_bin "python3"
