@@ -61,8 +61,10 @@ class Spotify:
 
 	@classmethod
 	def delete_cached_token(cls):
-		print("deleting cached token")
-		os.remove(cls.get_cached_token_path())
+		try:
+			os.remove(cls.get_cached_token_path())
+		except FileNotFoundError:
+			pass
 
 	@classmethod
 	def build_auth_manager(cls):

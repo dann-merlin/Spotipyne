@@ -15,7 +15,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-from gi.repository import Gtk, GLib
+from gi.repository import Gtk, GLib, Pango
 
 from selenium import webdriver
 from selenium.webdriver.common.keys import Keys
@@ -33,7 +33,7 @@ import spotipy
 class Login(Gtk.Bin):
 	__gtype_name__ = 'Login'
 
-	LoginListBox = Gtk.Template.Child()
+	LoginVBox = Gtk.Template.Child()
 
 	def __init__(self, onLoggedIn, **kwargs):
 		super().__init__(**kwargs)
@@ -41,42 +41,49 @@ class Login(Gtk.Bin):
 			GLib.idle_add(onLoggedIn)
 			return
 
-		try:
-			sp.delete_cached_token()
-		except FileNotFoundError:
-			pass
-
-		def installTrapBrowser():
-			import webbrowser
-			webbrowser.register(name="echo", klass=None, instance=webbrowser.Mozilla("echo"), preferred=True)
-		installTrapBrowser()
+		sp.delete_cached_token()
 
 		self.onLoggedIn = onLoggedIn
 		self.SubmitButton = Gtk.Button("Submit")
 		username_label = Gtk.Label('Username: ')
+		username_label.set_line_wrap(True)
+		username_label.set_line_wrap_mode(Pango.WrapMode.WORD_CHAR);
 		username_input = Gtk.Entry()
 		username_input.set_placeholder_text('Input username here')
-		box_username = Gtk.FlowBox()
-		box_username.set_homogeneous(True)
-		box_username.add(username_label)
-		box_username.add(username_input)
-		password_label = Gtk.Label('Password: ')
+		password_label = Gtk.Label('Password (*only needed with automation): ')
+		password_label.set_selectable(False)
+		password_label.set_line_wrap(True)
+		password_label.set_line_wrap_mode(Pango.WrapMode.WORD_CHAR);
 		password_input = Gtk.Entry()
 		password_input.set_placeholder_text('Input password here')
 		password_input.set_visibility(False)
 		password_input.set_invisible_char('*')
-		box_password = Gtk.FlowBox()
-		box_password.set_homogeneous(True)
-		box_password.add(password_label)
-		box_password.add(password_input)
-		self.LoginListBox.add(Gtk.Label("Login to Spotify"))
-		self.LoginListBox.add(box_username)
-		self.LoginListBox.add(box_password)
-		self.LoginListBox.add(self.SubmitButton)
+
+		check_login_with_automation = Gtk.CheckButton.new_with_label("Login with browser automation !Automatically agrees to authorize this app! (experimental)")
+		check_login_with_automation_label = check_login_with_automation.get_child()
+		check_login_with_automation_label.set_line_wrap(True)
+		check_login_with_automation_label.set_lines(2)
+		check_login_with_automation_label.set_line_wrap_mode(Pango.WrapMode.WORD_CHAR);
+
+		def add_and_set_focus(box, widget, focus=False):
+			box.add(widget)
+			row = box.get_children()[-1]
+			row.set_can_focus(focus)
+
+		add_and_set_focus(self.LoginVBox, Gtk.Label("Login to Spotify"))
+		add_and_set_focus(self.LoginVBox, username_label)
+		add_and_set_focus(self.LoginVBox, username_input, True)
+		add_and_set_focus(self.LoginVBox, check_login_with_automation, True)
+		add_and_set_focus(self.LoginVBox, password_label)
+		add_and_set_focus(self.LoginVBox, password_input, True)
+		add_and_set_focus(self.LoginVBox, self.SubmitButton, True)
 		self.show_all()
 		def onButtonPressed(button):
 			def readInputsAndStartLoginThread():
-				threading.Thread(daemon=True, target=self.loginWithSelenium, args=(username_input.get_text(), password_input.get_text())).start()
+				if check_login_with_automation.get_active():
+					threading.Thread(daemon=True, target=self.loginWithSelenium, args=(username_input.get_text(), password_input.get_text())).start()
+				else:
+					threading.Thread(daemon=True, target=self.loginNormal, args=(username_input.get_text(),)).start()
 			GLib.idle_add(readInputsAndStartLoginThread)
 		self.SubmitButton.connect("clicked", onButtonPressed)
 
@@ -86,7 +93,11 @@ class Login(Gtk.Bin):
 		except Exception as e:
 			# Probably username is not cached
 			return False
-		cached_token = auth_manager.get_cached_token()
+		try:
+			cached_token = auth_manager.get_cached_token()
+		except spotipy.SpotifyException as e:
+			print(str(e))
+			return False
 		if cached_token is None:
 			return False
 		if auth_manager.is_token_expired(cached_token):
@@ -95,7 +106,18 @@ class Login(Gtk.Bin):
 			return False
 		return True
 
+	def loginNormal(self, username):
+		sp.set_username_backup(username)
+		sp.get().currently_playing()
+		sp.save_username_to_cache(username)
+		GLib.idle_add(self.onLoggedIn)
+
 	def loginWithSelenium(self, username, password):
+		def installTrapBrowser():
+			import webbrowser
+			webbrowser.register(name="echo", klass=None, instance=webbrowser.Mozilla("echo"), preferred=True)
+		installTrapBrowser()
+
 		sp.set_username_backup(username)
 		start_auth = threading.Semaphore()
 

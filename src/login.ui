@@ -5,21 +5,12 @@
   <template class="Login" parent="GtkBin">
     <property name="can-focus">False</property>
     <child>
-      <object class="GtkBox">
+      <object class="GtkBox" id="LoginVBox">
         <property name="visible">True</property>
         <property name="can-focus">False</property>
         <property name="orientation">vertical</property>
         <child>
-          <object class="GtkListBox" id="LoginListBox">
-            <property name="visible">True</property>
-            <property name="can-focus">False</property>
-            <property name="selection-mode">none</property>
-          </object>
-          <packing>
-            <property name="expand">True</property>
-            <property name="fill">True</property>
-            <property name="position">1</property>
-          </packing>
+          <placeholder/>
         </child>
       </object>
     </child>
