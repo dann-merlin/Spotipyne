@@ -35,8 +35,6 @@ class Login(Gtk.Bin):
 
 	LoginListBox = Gtk.Template.Child()
 
-	LOCAL_SOCKET_PATH = "/tmp/spotipyne_login_url_socket"
-
 	def __init__(self, onLoggedIn, **kwargs):
 		super().__init__(**kwargs)
 		if self.canLogIn():
@@ -102,19 +100,6 @@ class Login(Gtk.Bin):
 		start_auth = threading.Semaphore()
 
 		def handleLoginRequest():
-			def receiveUrl():
-				import socket
-				with socket.socket(socket.AF_UNIX, socket.SOCK_STREAM) as sock:
-					try:
-						os.remove(self.LOCAL_SOCKET_PATH)
-					except FileNotFoundError:
-						pass
-					sock.bind(self.LOCAL_SOCKET_PATH)
-					sock.listen(3)
-					connection, address = sock.accept()
-					received_url = connection.recv(512).decode('utf-8')
-					return received_url
-
 			def getWebdriver():
 				try:
 					return webdriver.Firefox()
@@ -155,20 +140,24 @@ class Login(Gtk.Bin):
 							print("Authorization granted!")
 						except WebDriverException:
 							print("Failed to authorize on the spotify web page")
+							return False
+					return True
 
 				if "Login" in driver.title:
 					logIntoAccount()
 
 				WebDriverWait(driver, site_load_timeout).until_not(expected_conditions.title_contains("Login"))
-				authorizeRequest()
+				authorized = authorizeRequest()
 				driver.quit()
+				return authorized
 
 			start_auth.acquire(1)
 			url = sp.build_auth_manager().get_authorize_url()
 			try:
-				handleLoginPage(getWebdriver(), url)
-			except:
+				return handleLoginPage(getWebdriver(), url)
+			except Exception:
 				print("Failed logging in.")
+				return False
 				# TODO try again somehow
 
 		def _login_browser():
