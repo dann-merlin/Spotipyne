@@ -75,7 +75,7 @@ class Spotify:
 
 		cache_path = cls.get_cached_token_path()
 
-		scope = "user-read-playback-position,user-read-private,user-library-read,user-top-read,playlist-modify-public,playlist-modify-private,user-read-playback-state,user-read-currently-playing,user-read-recently-played,user-modify-playback-state,playlist-read-private,playlist-read-collaborative"
+		scope = "user-read-playback-position,user-read-private,user-library-modify,user-library-read,user-top-read,playlist-modify-public,playlist-modify-private,user-read-playback-state,user-read-currently-playing,user-read-recently-played,user-modify-playback-state,playlist-read-private,playlist-read-collaborative"
 
 		user = cls.get_username_from_cache()
 		if user is None and cls.username_backup is None:
