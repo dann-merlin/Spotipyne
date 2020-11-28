@@ -75,24 +75,19 @@ class SimpleControls(Gtk.Revealer):
 			self.__is_saved_track = is_saved_track
 			def to_main_thread():
 				if is_saved_track:
-					print("setting remove image")
 					self.set_image(self.remove_saved_icon_image)
 				else:
-					print("setting add image")
 					self.set_image(self.add_saved_icon_image)
 			GLib.idle_add(to_main_thread)
 
 		def on_clicked(self, _, spotifyPlayback):
 			def to_bg():
-				print("clicked fav button")
 				try:
 					current_track_uri = spotifyPlayback.track_uri
 					saved = self.__is_saved_track
 					if saved:
-						print("remove!")
 						sp.get().current_user_saved_tracks_delete([current_track_uri])
 					else:
-						print("add!")
 						sp.get().current_user_saved_tracks_add([current_track_uri])
 					spotifyPlayback.emit("is_saved_track_changed", not saved)
 				except SpotifyException as e:
@@ -119,7 +114,6 @@ class SimpleControls(Gtk.Revealer):
 
 		def updateSmoothingSpeed(self, spotifyPlayback, track_uri):
 			self.__smoothing_speed = self.__smooth_time_ms / spotifyPlayback.duration_ms
-			print("new smoothing speed is: " + str(self.__smoothing_speed))
 
 		def updateFractionSmoothly(self):
 			self.set_fraction(self.get_fraction() + self.__smoothing_speed)
@@ -143,7 +137,6 @@ class SimpleControls(Gtk.Revealer):
 
 		spotifyPlayback.connect("track_changed", self.on_track_changed)
 		def reveal_child(_, reveal):
-			print("Reveal: " + str(reveal))
 			self.set_reveal_child(reveal)
 		spotifyPlayback.connect("has_playback", reveal_child)
 

@@ -148,8 +148,8 @@ class SpotifyGuiBuilder:
 					fields='name,images,followers(total),owner(display_name)'
 				)
 				playlist_cover_size_big = 128
-				image_url = get_desired_image_for_size(playlist_cover_size_big, playlist_info_response['images'])
-				self.coverArtLoader.asyncUpdateCover(playlist_image, playlist_uri, image_url, dimensions=Dimensions(playlist_cover_size_big, playlist_cover_size_big, True))
+				images = playlist_info_response['images']
+				self.coverArtLoader.asyncUpdateCover(playlist_image, playlist_uri, images, dimensions=Dimensions(playlist_cover_size_big, playlist_cover_size_big, True))
 
 				def buildPlaylistLabel():
 					markup_string = '<b>' + GLib.markup_escape_text(playlist_info_response['name']) + '</b>'
@@ -180,11 +180,9 @@ class SpotifyGuiBuilder:
 	def __buildGenericEntry(self, entry, imageResponses, uri, labelText, desiredCoverSize = 60):
 		hbox = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL)
 
-		imageUrl = get_desired_image_for_size(desiredCoverSize, imageResponses)
-
 		coverArt = self.coverArtLoader.getLoadingImage()
 		hbox.pack_start(coverArt, False, True, 5)
-		self.coverArtLoader.asyncUpdateCover(coverArt, url=imageUrl, uri=uri, dimensions=Dimensions(desiredCoverSize, desiredCoverSize, True))
+		self.coverArtLoader.asyncUpdateCover(coverArt, urls=imageResponses, uri=uri, dimensions=Dimensions(desiredCoverSize, desiredCoverSize, True))
 		label = Gtk.Label(xalign=0)
 		label.set_max_width_chars(32)
 		label.set_line_wrap(True)
@@ -317,11 +315,10 @@ class SpotifyGuiBuilder:
 			imageResponses = playlist['images']
 
 			desired_size = 60
-			imageUrl = get_desired_image_for_size(desired_size, imageResponses)
 
 			coverArt = self.coverArtLoader.getLoadingImage()
 			hbox.pack_start(coverArt, False, True, 5)
-			self.coverArtLoader.asyncUpdateCover(coverArt, url=imageUrl, uri=playlistUri, dimensions=Dimensions(desired_size, desired_size, True))
+			self.coverArtLoader.asyncUpdateCover(coverArt, urls=imageResponses, uri=playlistUri, dimensions=Dimensions(desired_size, desired_size, True))
 			nameLabel = Gtk.Label(playlist['name'], xalign=0)
 			nameLabel.set_max_width_chars(32)
 			nameLabel.set_line_wrap(True)

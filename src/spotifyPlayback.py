@@ -93,7 +93,7 @@ class SpotifyPlayback(GObject.Object):
 							)['name']
 					self.track_uri = pb['item']['uri']
 					self.duration_ms = pb['item']['duration_ms']
-					self.coverUrl = get_desired_image_for_size(self.desired_size, pb['item']['album']['images'])
+					self.coverUrl = pb['item']['album']['images']
 					self.emit("track_changed", self.track_uri)
 					if sp.get().current_user_saved_tracks_contains([self.track_uri])[0]:
 						self.emit("is_saved_track_changed", self.is_saved_track);
@@ -116,7 +116,6 @@ class SpotifyPlayback(GObject.Object):
 
 	@GObject.Signal(arg_types=(str,))
 	def track_changed(self, track_uri):
-		print("track changed!")
 		pass
 
 	@GObject.Signal(arg_types=(bool,))

@@ -66,18 +66,29 @@ def get_desired_image_for_size(desired_size, imageResponses):
 			continue
 		smaller = image['height'] if image['width'] > image['height'] else image['width']
 		if smaller >= desired_size:
-			return image['url']
+			return image['url'], Dimensions(image['width'], image['height'], image['width'] == image['height'])
 	try:
 		if imageResponses[-1]:
-			return imageResponses[-1]['url']
+			image = imageResponses[-1]
+			return image['url'], Dimensions(image['width'], image['height'], image['width'] == image['height'])
 	except IndexError:
 		pass
-	return None
+	return None, Dimensions(desired_size, desired_size, True)
 
 
 def downloadToFile(url, toFile):
 	response = requests.get(url)
 	open(toFile, 'wb').write(response.content)
+
+def renameFileIfDimensionsNone(uri, cachePath):
+	loaded = load_pixbuf_from_file(path=cachePath)
+	w = loaded.get_width()
+	h = loaded.get_height()
+	read_dim = Dimensions(w, h, w==h)
+	new_filename = getCoverPath(uri, read_dim)
+	os.rename(cachePath, new_filename)
+	return read_dim
+
 
 def cropToSquare(pixbuf):
 	height = pixbuf.get_height()
@@ -99,6 +110,15 @@ class Dimensions:
 		if isinstance(other, Dimensions):
 			return self.__key() == other.__key()
 		return NotImplemented
+
+	def __gt__(self, other):
+		return self.width > other.width and self.height > other.height
+	def __ge__(self, other):
+		return self.width >= other.width and self.height >= other.height
+	def __lt__(self, other):
+		return self.width < other.width and self.height < other.height
+	def __le__(self, other):
+		return self.width >= other.width and self.height >= other.height
 
 	def __init__(self, width, height, be_square=False):
 		self.width = width
@@ -122,25 +142,40 @@ class PixbufCache:
 
 		def __init__(self):
 			self.entryLock = threading.Lock()
-			self.pixbuf_orig = None
+			# self.pixbuf_orig = None
 			self.pixbufs_scaled = {}
 			self.used_by = 0
 			self.error = False
 
-		def __get_orig(self, uri, dim, url=None):
+		def __get_image(self, uri, dim, url=None):
 			cachePath = getCoverPath(uri, dim)
 			if os.path.isfile(cachePath):
 				loaded = load_pixbuf_from_file(path=cachePath)
 				if loaded:
-					self.pixbufs_scaled[Dimensions(loaded.get_width(), loaded.get_height(), True)] = loaded
-					self.pixbufs_scaled[Dimensions(loaded.get_width(), loaded.get_height(), False)] = loaded
 					return loaded
 			if url:
 				downloadToFile(url, cachePath)
-				return self.__get_orig(uri, dim, None)
+				if dim.height is None or dim.width is None:
+					dim = renameFileIfDimensionsNone(uri, cachePath)
+				return self.__get_image(uri, dim, None)
 			return None
 
-		def get_scaled(self, uri, dim, url):
+
+
+		# def __get_orig(self, uri, dim, url=None):
+		# 	cachePath = getCoverPath(uri, dim)
+		# 	if os.path.isfile(cachePath):
+		# 		loaded = load_pixbuf_from_file(path=cachePath)
+		# 		if loaded:
+		# 			self.pixbufs_scaled[Dimensions(loaded.get_width(), loaded.get_height(), True)] = loaded
+		# 			self.pixbufs_scaled[Dimensions(loaded.get_width(), loaded.get_height(), False)] = loaded
+		# 			return loaded
+		# 	if url:
+		# 		downloadToFile(url, cachePath)
+		# 		return self.__get_orig(uri, dim, None)
+		# 	return None
+
+		def get_scaled(self, uri, dim, urls):
 			self.used_by += 1
 
 			if self.error:
@@ -149,28 +184,41 @@ class PixbufCache:
 			if dim in self.pixbufs_scaled.keys():
 				return self.pixbufs_scaled[dim]
 
-			if not self.pixbuf_orig:
-				self.pixbuf_orig = self.__get_orig(uri, dim, url)
-				if not self.pixbuf_orig:
-					self.error = True
-					return None
+			bigEnoughDims = [scale for scale in self.pixbufs_scaled.keys() if scale >= dim]
+			if len(bigEnoughDims) > 0:
+				self.pixbufs_scaled[dim] = scaleToDimension(self.pixbufs_scaled[min(bigEnoughDims)], dim)
+			else:
+				image_url, desired_dim = get_desired_image_for_size(dim.height, urls)
+				bigger_img = self.__get_image(uri, desired_dim, image_url)
+				self.pixbufs_scaled[desired_dim] = bigger_img
+				self.pixbufs_scaled[dim] = scaleToDimension(bigger_img, dim)
 
-			if dim not in self.pixbufs_scaled.keys():
-				self.pixbufs_scaled[dim] = scaleToDimension(self.pixbuf_orig, dim)
 			return self.pixbufs_scaled[dim]
+
+			# for scale in self.pixbufs_scaled.keys():
+			# 	if s
+			# if not self.pixbuf_orig:
+			# 	self.pixbuf_orig = self.__get_orig(uri, dim, url)
+			# 	if not self.pixbuf_orig:
+			# 		self.error = True
+			# 		return None
+
+			# if dim not in self.pixbufs_scaled.keys():
+			# 	self.pixbufs_scaled[dim] = scaleToDimension(self.pixbuf_orig, dim)
+			# return self.pixbufs_scaled[dim]
 
 		def dec_used(self):
 			self.used_by -= 1
 
 			if self.used_by <= 0:
-				self.pixbuf_orig = None
+				# self.pixbuf_orig = None
 				self.pixbufs_scaled = {}
 
 	def __init__(self):
 		self.__pixbufs_lock = threading.Lock()
 		self.__pixbufs = {}
 
-	def get_pixbuf(self, uri, dimensions, url):
+	def get_pixbuf(self, uri, dimensions, urls):
 		pixbufEntryPair = None
 		with self.__pixbufs_lock:
 			if uri not in self.__pixbufs.keys():
@@ -178,7 +226,7 @@ class PixbufCache:
 			pixbufEntryPair = self.__pixbufs[uri]
 
 		with pixbufEntryPair[1]:
-			return pixbufEntryPair[0].get_scaled(uri, dimensions, url)
+			return pixbufEntryPair[0].get_scaled(uri, dimensions, urls)
 
 	def forget_pixbuf(self, uri):
 		with self.__pixbufs_lock:
@@ -196,7 +244,7 @@ class CoverArtLoader:
 	def getLoadingImage(self):
 		return Gtk.Image.new_from_icon_name("image-loading-symbolic.symbolic", Gtk.IconSize.DIALOG)
 
-	def asyncUpdateCover(self, updateMe, uri, url, dimensions=Dimensions(16, 16, True)):
+	def asyncUpdateCover(self, updateMe, uri, urls, dimensions=Dimensions(16, 16, True)):
 
 		def updateInParent_pixbuf(newChild):
 			# GTK
@@ -211,7 +259,7 @@ class CoverArtLoader:
 			GLib.idle_add(priority=GLib.PRIORITY_LOW, function=errorImage)
 
 		def getPixbufAndUpdate():
-			pixbuf = self.pixbuf_cache.get_pixbuf(uri=uri, dimensions=dimensions, url=url)
+			pixbuf = self.pixbuf_cache.get_pixbuf(uri=uri, dimensions=dimensions, urls=urls)
 			if pixbuf:
 				updateInParent_pixbuf(pixbuf)
 			else:
