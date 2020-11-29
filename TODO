@@ -1,22 +1,14 @@
 start/stop spotifyd with a button
 
 limit threads, that are started when loading a playlist
-better handling for selecting playlist, while another is still loading
+better handling for selecting playlist, while another is still loading // I guess this is kind of done
 re-add playing songs in playlists
 add more searchresults option
-swipe-back should also pop results
 Fix episodes don't get displayed in simpleControls panel
 add functionality to heart button
 add All songs to Library
 add Spotify created playlists
 Add More controls on clicking on the simple controls panel
-Add playlist description above Playlistracks
 
 Future (first get real features done):
-find out why app is still unreactive while loading a playlist
-
 fix some covers aren't found (probably because of markets / actually no. I don't know)
-
-error when spotify auth failed
-
-do spotify auth via interface
