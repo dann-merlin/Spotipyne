@@ -34,6 +34,8 @@ class SpotipyneWindow(Handy.ApplicationWindow):
 	__gtype_name__ = 'SpotipyneWindow'
 
 	Handy.init()
+	WindowStack = Gtk.Template.Child()
+	MainBox = Gtk.Template.Child()
 	HeaderbarSwitcher = Gtk.Template.Child()
 	BottomSwitcher = Gtk.Template.Child()
 	PlayerDeck = Gtk.Template.Child()
@@ -128,9 +130,9 @@ class SpotipyneWindow(Handy.ApplicationWindow):
 
 	def initLogin(self):
 		self.LoginPage = Login(self.onLoggedIn)
-		self.PlayerDeck.add(self.LoginPage)
-		self.PlayerDeck.set_visible_child(self.LoginPage)
-		self.PlayerDeck.show_all()
+		self.WindowStack.add(self.LoginPage)
+		self.WindowStack.set_visible_child(self.LoginPage)
+		self.WindowStack.show_all()
 
 	def __init__(self, **kwargs):
 		super().__init__(**kwargs)
@@ -139,8 +141,8 @@ class SpotipyneWindow(Handy.ApplicationWindow):
 
 	def onLoggedIn(self):
 
-		self.PlayerDeck.remove(self.LoginPage)
-		self.PlayerDeck.set_visible_child(self.PlayerDeck.get_children()[0])
+		self.WindowStack.remove(self.LoginPage)
+		self.WindowStack.set_visible_child(self.MainBox)
 
 		self.initCoverArtLoader()
 
