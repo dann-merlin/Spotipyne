@@ -26,6 +26,7 @@ from .spotifyGuiBuilder import SpotifyGuiBuilder
 from .spotify import Spotify as sp
 from .spotifyPlayback import SpotifyPlayback
 from .simpleControls import SimpleControls
+from .libraryOverview import LibraryOverview
 from .searchOverview import SearchOverview
 from .login import Login
 
@@ -38,76 +39,18 @@ class SpotipyneWindow(Handy.ApplicationWindow):
 	BottomSwitcher = Gtk.Template.Child()
 	PlayerDeck = Gtk.Template.Child()
 	MainStack = Gtk.Template.Child()
-	LibraryOverview = Gtk.Template.Child()
-	PrimaryBox = Gtk.Template.Child()
-	PlaylistsList = Gtk.Template.Child()
-	SecondaryBox = Gtk.Template.Child()
-	PlaylistTracksList = Gtk.Template.Child()
 	BackButtonStack = Gtk.Template.Child()
 	BackButtonPlaylists = Gtk.Template.Child()
 	BackButtonSearch = Gtk.Template.Child()
 	SimpleControlsParent = Gtk.Template.Child()
 	Revealer = Gtk.Template.Child()
 	RevealButton = Gtk.Template.Child()
-	SecondaryViewport = Gtk.Template.Child()
-
-	def onPlaylistsListRowActivated(self, playlistsList, playlistRow):
-		def loadPlaylistTracks():
-			builtPage = self.spGUI.buildPlaylistPage(playlistRow.getUri())
-			# TODO has the next line to be commented in?
-			self.SecondaryViewport.remove(self.SecondaryViewport.get_child())
-			self.SecondaryViewport.add(builtPage)
-			self.SecondaryViewport.show_all()
-
-		loadPlaylistTracks()
-		self.LibraryOverview.set_visible_child(self.SecondaryBox)
-		# self.spGUI.asyncLoadPlaylistTracks(self.PlaylistTracksList, playlistRow.getUri().split(":")[-1], self.TracksListResumeEvent, self.TracksListStopEvent)
 
 	def toggleReveal(self, button):
 		self.Revealer.set_reveal_child( not self.Revealer.get_reveal_child())
 
-	def playlist_tracks_focused(self):
-		return self.LibraryOverview.get_visible_child() == self.SecondaryBox
-
 	def initCoverArtLoader(self):
 		self.coverArtLoader = CoverArtLoader()
-
-	def initLibraryOverview(self):
-
-		def initLists():
-			self.TracksListStopEvent = threading.Event()
-			self.TracksListResumeEvent = threading.Event()
-			self.TracksListResumeEvent.set()
-			self.PlaylistsList.connect("row-activated", self.onPlaylistsListRowActivated)
-			self.spGUI.asyncLoadPlaylists(self.PlaylistsList)
-
-		initLists()
-
-		def onFoldedChange(playlistsOverview, _):
-			# For some reason the folded variable can not be trusted
-			if playlistsOverview.get_folded():
-				if playlistsOverview.get_visible_child() == self.PrimaryBox:
-					self.BackButtonPlaylists.hide()
-				else:
-					self.BackButtonPlaylists.show()
-			else:
-				self.BackButtonPlaylists.hide()
-
-		def onChildSwitched(playlistsOverview, _):
-			if playlistsOverview.get_visible_child() == self.PrimaryBox:
-				self.BackButtonPlaylists.hide()
-			else:
-				if playlistsOverview.get_folded():
-					self.BackButtonPlaylists.show()
-				else:
-					self.BackButtonPlaylists.hide()
-
-		def onClickedBackButton(backButton):
-			self.LibraryOverview.set_visible_child(self.PrimaryBox)
-
-		self.LibraryOverview.connect("notify::folded", onFoldedChange)
-		self.LibraryOverview.connect("notify::visible-child", onChildSwitched)
-		self.BackButtonPlaylists.connect("clicked", onClickedBackButton)
 
 	def initSpotifyPlayback(self):
 		self.spotifyPlayback = SpotifyPlayback(self.coverArtLoader)
@@ -117,10 +60,15 @@ class SpotipyneWindow(Handy.ApplicationWindow):
 		self.SimpleControlsParent.pack_start(self.simpleControls, False, True, 0)
 		self.simpleControls.set_reveal_child(False)
 
+	def initLibraryOverview(self):
+		self.libraryOverview = LibraryOverview(self.spGUI, self.BackButtonPlaylists)
+		self.MainStack.add_titled(self.libraryOverview, 'Library', 'Library')
+		self.MainStack.child_set_property(self.libraryOverview, 'icon-name', 'applications-multimedia-symbolic')
+
 	def initSearchOverview(self):
 		self.searchOverview = SearchOverview(self.spGUI, self.BackButtonSearch)
 		self.MainStack.add_titled(self.searchOverview, 'Search', 'Search')
-		self.MainStack.child_set_property(self.searchOverview, "icon-name", "edit-find-symbolic")
+		self.MainStack.child_set_property(self.searchOverview, 'icon-name', 'edit-find-symbolic')
 
 	def initBackButtons(self):
 		self.BackButtonStack.child_set_property
@@ -138,7 +86,6 @@ class SpotipyneWindow(Handy.ApplicationWindow):
 		self.initLogin()
 
 	def onLoggedIn(self):
-
 		self.PlayerDeck.remove(self.LoginPage)
 		self.PlayerDeck.set_visible_child(self.PlayerDeck.get_children()[0])
 

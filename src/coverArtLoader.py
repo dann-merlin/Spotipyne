@@ -256,6 +256,8 @@ class CoverArtLoader:
 		return Gtk.Image.new_from_icon_name("image-loading-symbolic.symbolic", Gtk.IconSize.DIALOG)
 
 	def asyncUpdateCover(self, updateMe, uri, urls, dimensions=Dimensions(16, 16, True)):
+		if urls is None:
+			return
 
 		def updateInParent_pixbuf(newChild):
 			# GTK

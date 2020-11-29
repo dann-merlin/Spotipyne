@@ -33,6 +33,8 @@ spotipyne_sources = [
   'coverArtLoader.py',
   'spotifyPlayback.py',
   'simpleControls.py',
+  'contentDeck.py',
+  'libraryOverview.py',
   'searchOverview.py',
   'spotify.py',
   'login.py',

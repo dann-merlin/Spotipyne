@@ -214,6 +214,8 @@ class SpotifyGuiBuilder:
 		return self.__buildGenericEntry(row, imageResponses, artistUri, labelMarkup)
 
 	def buildEpisodeEntry(self, episodeResponse):
+		if episodeResponse is None:
+			return self.__buildGenericEntry(EpisodeRow(uri='episode::Response is None'), None, "No Uri. Episode is None", "No Uri. Episode is None")
 		episodeUri = episodeResponse['uri']
 		row = EpisodeRow(uri=episodeUri)
 		imageResponses = episodeResponse['images']
@@ -305,6 +307,9 @@ class SpotifyGuiBuilder:
 		for searchQuery in searchQueries:
 			_searchResultHelper(searchQuery['type'], searchQuery['name'], searchQuery['buildEntryFunction'], searchQuery['activationHandler'])
 		searchResultBox.show_all()
+
+	def buildLibrary(self):
+		return Gtk.Box()
 
 	def asyncLoadPlaylists(self, playlistsList):
 		# TODO use insert

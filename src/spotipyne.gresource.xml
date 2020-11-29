@@ -4,6 +4,7 @@
     <file>window.ui</file>
     <file>login.ui</file>
     <file>simpleControls.ui</file>
+    <file>libraryOverview.ui</file>
     <file>searchOverview.ui</file>
   </gresource>
 </gresources>
