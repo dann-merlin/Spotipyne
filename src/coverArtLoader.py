@@ -112,13 +112,24 @@ class Dimensions:
 		return NotImplemented
 
 	def __gt__(self, other):
+		if self.width is None or self.height is None:
+			return True
+		if other.width is None or other.height is None:
+			return False
 		return self.width > other.width and self.height > other.height
+
 	def __ge__(self, other):
-		return self.width >= other.width and self.height >= other.height
+		return self.__gt__(other) or self.__eq__(other)
+
 	def __lt__(self, other):
+		if self.width is None or self.height is None:
+			return False
+		if other.width is None or other.height is None:
+			return True
 		return self.width < other.width and self.height < other.height
+
 	def __le__(self, other):
-		return self.width >= other.width and self.height >= other.height
+		return self.__lt__(other) or self.__eq__(other)
 
 	def __init__(self, width, height, be_square=False):
 		self.width = width
