@@ -17,13 +17,6 @@
 
 from gi.repository import Gtk, GLib, Pango
 
-from selenium import webdriver
-from selenium.webdriver.common.keys import Keys
-from selenium.webdriver.common.by import By
-from selenium.webdriver.support.ui import WebDriverWait
-from selenium.webdriver.support import expected_conditions
-from selenium.common.exceptions import WebDriverException
-
 import threading
 import os
 from .spotify import Spotify as sp
@@ -113,6 +106,13 @@ class Login(Gtk.Bin):
 		GLib.idle_add(self.onLoggedIn)
 
 	def loginWithSelenium(self, username, password):
+		from selenium import webdriver
+		from selenium.webdriver.common.keys import Keys
+		from selenium.webdriver.common.by import By
+		from selenium.webdriver.support.ui import WebDriverWait
+		from selenium.webdriver.support import expected_conditions
+		from selenium.common.exceptions import WebDriverException
+
 		def installTrapBrowser():
 			import webbrowser
 			webbrowser.register(name="echo", klass=None, instance=webbrowser.Mozilla("echo"), preferred=True)
