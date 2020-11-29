@@ -119,54 +119,7 @@
                     <property name="can-focus">False</property>
                     <property name="transition-type">slide-left-right</property>
                     <child>
-                      <object class="GtkBox" id="TestPage">
-                        <property name="visible">True</property>
-                        <property name="can-focus">False</property>
-                        <property name="orientation">vertical</property>
-                        <child>
-                          <object class="GtkRevealer" id="Revealer">
-                            <property name="visible">True</property>
-                            <property name="can-focus">False</property>
-                            <property name="transition-type">slide-up</property>
-                            <property name="transition-duration">500</property>
-                            <property name="reveal-child">True</property>
-                            <child>
-                              <object class="GtkLabel">
-                                <property name="visible">True</property>
-                                <property name="can-focus">False</property>
-                                <property name="label" translatable="yes">label</property>
-                              </object>
-                            </child>
-                          </object>
-                          <packing>
-                            <property name="expand">False</property>
-                            <property name="fill">True</property>
-                            <property name="pack-type">end</property>
-                            <property name="position">0</property>
-                          </packing>
-                        </child>
-                        <child>
-                          <object class="GtkButton" id="RevealButton">
-                            <property name="label" translatable="yes">TOGGLE!</property>
-                            <property name="visible">True</property>
-                            <property name="can-focus">True</property>
-                            <property name="receives-default">True</property>
-                          </object>
-                          <packing>
-                            <property name="expand">False</property>
-                            <property name="fill">True</property>
-                            <property name="position">1</property>
-                          </packing>
-                        </child>
-                        <child>
-                          <placeholder/>
-                        </child>
-                      </object>
-                      <packing>
-                        <property name="name">Unused</property>
-                        <property name="title" translatable="yes">Unused</property>
-                        <property name="icon-name">multimedia-volume-control-symbolic</property>
-                      </packing>
+                      <placeholder/>
                     </child>
                   </object>
                   <packing>

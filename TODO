@@ -1,3 +1,8 @@
+currently:
+this is a mess right now. I think I should have a subclass of the GenericSpotifyRow, that can build another Widget, that should then be pushed onto the current contentDeck (that push-function has to be passed through)
+and then there has to be another subclass, that just does normal function calls, like start playing a song or something.
+And I really don't like how Saved Tracks are handled right now. Maybe I could have two Lists above each other looking like one? Or maybe just split up Library and Playlists again like spotify-tui does. Idk.
+
 start/stop spotifyd with a button
 
 limit threads, that are started when loading a playlist
@@ -7,6 +12,7 @@ add more searchresults option
 Fix episodes don't get displayed in simpleControls panel
 add functionality to heart button
 add All songs to Library
+the playlist pages need a random play button.
 add Spotify created playlists
 Add More controls on clicking on the simple controls panel
 

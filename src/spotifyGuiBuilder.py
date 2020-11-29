@@ -73,6 +73,18 @@ class SpotifyGuiBuilder:
 		self.coverArtLoader = coverArtLoader
 		self.currentPlaylistID = ''
 
+	def getPlaylists(self):
+		allPlaylists = []
+		offset = 0
+		pageSize = 50
+		keepGoing = True
+		while keepGoing:
+			playlistsResponse = sp.get().current_user_playlists(limit=pageSize, offset=offset)
+			keepGoing = playlistsResponse['next'] != None
+			offset += pageSize
+			allPlaylists += playlistsResponse['items']
+		return allPlaylists
+
 	def getPlaylistTracks(self, playlist_id):
 		allTracks = []
 		offset = 0
@@ -308,8 +320,45 @@ class SpotifyGuiBuilder:
 			_searchResultHelper(searchQuery['type'], searchQuery['name'], searchQuery['buildEntryFunction'], searchQuery['activationHandler'])
 		searchResultBox.show_all()
 
-	def buildLibrary(self):
-		return Gtk.Box()
+	def loadLibrary(self, listbox, pushWidgetFunction):
+		listbox.set_placeholder(Gtk.Label("Loading library..."))
+
+		def _load_library_helper():
+			def loadSavedTracksEntry():
+				def buildSavedTracksEntry():
+					fakePlaylistResponse = {
+						'uri': 'Saved Tracks',
+						'name': 'Saved Tracks',
+						'images': None
+					}
+					return self.buildPlaylistEntry(fakePlaylistResponse)
+
+				savedTracksEntry = buildSavedTracksEntry()
+				listbox.insert(savedTracksEntry, 0)
+				def onRowActivated(listbox, entry):
+					def inBackground():
+						def getData():
+							if entry.getUri() == 'Saved Tracks':
+								return self.getSavedTracks()
+							else:
+								return self.getPlaylistTracks(playlist_uri.split(':')[-1])
+						data = getData()
+						def pushData():
+							if entry.getUri() == 'Saved Tracks':
+								# TODO all of this...
+							widget = buildPlaylistPage(
+							pushWidgetFunction(widget)
+						GLib.idle_add(pushData)
+
+					threading.Thread(daemon=True, target=inBackground).start()
+
+				listbox.connect("row-activated", onRowActivated)
+
+			GLib.idle_add(loadSavedTracksEntry)
+			playlists = self.getPlaylists()
+			self.loadGenericList(listbox, playlists, self.buildPlaylistEntry)
+
+		threading.Thread(daemon=True, target=_load_library_helper).start()
 
 	def asyncLoadPlaylists(self, playlistsList):
 		# TODO use insert

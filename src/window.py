@@ -43,11 +43,6 @@ class SpotipyneWindow(Handy.ApplicationWindow):
 	BackButtonPlaylists = Gtk.Template.Child()
 	BackButtonSearch = Gtk.Template.Child()
 	SimpleControlsParent = Gtk.Template.Child()
-	Revealer = Gtk.Template.Child()
-	RevealButton = Gtk.Template.Child()
-
-	def toggleReveal(self, button):
-		self.Revealer.set_reveal_child( not self.Revealer.get_reveal_child())
 
 	def initCoverArtLoader(self):
 		self.coverArtLoader = CoverArtLoader()
@@ -104,5 +99,3 @@ class SpotipyneWindow(Handy.ApplicationWindow):
 		self.initBackButtons()
 
 		self.HeaderbarSwitcher.bind_property("title-visible", self.BottomSwitcher, "reveal", GObject.BindingFlags.SYNC_CREATE)
-
-		self.RevealButton.connect("clicked", self.toggleReveal)

@@ -255,8 +255,19 @@ class CoverArtLoader:
 	def getLoadingImage(self):
 		return Gtk.Image.new_from_icon_name("image-loading-symbolic.symbolic", Gtk.IconSize.DIALOG)
 
+	def getHeartImage(self):
+		return Gtk.Image.new_from_icon_name("emblem-favorite-symbolic.symbolic", Gtk.IconSize.DIALOG)
+
 	def asyncUpdateCover(self, updateMe, uri, urls, dimensions=Dimensions(16, 16, True)):
+		def __set_to_icon(icon_name, size):
+			def __set_to_icon_helper():
+				updateMe.set_from_icon_name(icon_name, size)
+				updateMe.set_pixel_size(dimensions.height)
+			GLib.idle_add(priority=GLib.PRIORITY_LOW, function = __set_to_icon_helper)
+
 		if urls is None:
+			if uri == "Saved Tracks":
+				__set_to_icon("emblem-favorite-symbolic.symbolic", Gtk.IconSize.DIALOG)
 			return
 
 		def updateInParent_pixbuf(newChild):
@@ -266,10 +277,7 @@ class CoverArtLoader:
 			GLib.idle_add(priority=GLib.PRIORITY_LOW, function=toImage)
 
 		def updateInParent_error():
-			# GTK
-			def errorImage():
-				updateMe.set_from_icon_name("image-missing-symbolic.symbolic", Gtk.IconSize.DIALOG)
-			GLib.idle_add(priority=GLib.PRIORITY_LOW, function=errorImage)
+			__set_to_icon("image-missing-symbolic.symbolic", Gtk.IconSize.DIALOG)
 
 		def getPixbufAndUpdate():
 			pixbuf = self.pixbuf_cache.get_pixbuf(uri=uri, dimensions=dimensions, urls=urls)
