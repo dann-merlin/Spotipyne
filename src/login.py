@@ -124,19 +124,19 @@ class Login(Gtk.Bin):
 		def handleLoginRequest():
 			def getWebdriver():
 				try:
-					return webdriver.Firefox()
+					return webdriver.Firefox(service_log_path="/dev/null")
 				except:
 					print("Firefox driver (geckodriver) not installed", file=sys.stderr)
 				try:
-					return webdriver.Chrome()
+					return webdriver.Chrome(service_log_path="/dev/null")
 				except WebDriverException:
 					print("Chrome driver is not installed", file = sys.stderr)
 				try:
-					return webdriver.Safari()
+					return webdriver.Safari(service_log_path="/dev/null")
 				except Exception:
 					print("Safari driver is not installed", file = sys.stderr)
 				try:
-					return webdriver.Ie()
+					return webdriver.Ie(service_log_path="/dev/null")
 				except WebDriverException:
 					print("Internet Explorer driver is not installed", file = sys.stderr)
 				raise Exception("No installed Webdriver found")
