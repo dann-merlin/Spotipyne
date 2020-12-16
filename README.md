@@ -32,11 +32,13 @@ Not a lot yet. But here's a short list:
 
 For installation see below.
 
-You need to set your spotify username as an environment variable.
+I have finally implemented a way to login with a user interface.
+For the normal login, just input your username and press submit. This should start your browser, if you haven't authorized the application to access your Spotify account yet.
+You could also try the browser-automation login, which uses selenium to automate the login process inside the browser. However this didn't work on the pinephone for me. Also you have to install some sort of webdriver supported by selenium like the geckodriver for firefox.
 
-``export SPOTIPYNE_USERNAME="my_username"``
+You only need to insert the password, if you are using the automated process.
 
-I have not implemented a way to set it inside the application yet.
+**Note: IF YOU ARE USING THE BROWSER AUTOMATION, IT WILL AUTOMATICALLY AGREE TO AUTHORIZE THIS APP TO HAVE ACCESS TO YOUR LIBRARY AND PLAYBACK! PLEASE BE AWARE OF THAT.**
 
 # Build dependencies
 
@@ -52,6 +54,10 @@ I have not implemented a way to set it inside the application yet.
 - PyGObject >= 3.36
 - pyxdg
 - spotipy
+
+# Optional Dependencies:
+
+- selenium and a webdriver like geckodriver (for browser automation on login)
 
 # Building
 
