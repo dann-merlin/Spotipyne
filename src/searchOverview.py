@@ -25,88 +25,88 @@ from .coverArtLoader import Dimensions
 
 @Gtk.Template(resource_path='/xyz/merlinx/Spotipyne/searchOverview.ui')
 class SearchOverview(Gtk.Box):
-	__gtype_name__ = 'SearchOverview'
+    __gtype_name__ = 'SearchOverview'
 
-	SearchBarEntry = Gtk.Template.Child()
-	SearchDeck = Gtk.Template.Child()
+    SearchBarEntry = Gtk.Template.Child()
+    SearchDeck = Gtk.Template.Child()
 
-	def __init__(self, GuiBuilder, backButton, **kwargs):
-		super().__init__(**kwargs)
-		self.GuiBuilder = GuiBuilder
-		self.BackButton = backButton
-		self.SearchBarEntry.connect("activate", self.search)
-		self.SearchBarEntry.set_placeholder_text("Search")
-		self.ScrolledWindow = Gtk.ScrolledWindow()
-		self.SearchResultsBox = Gtk.Box(orientation=Gtk.Orientation.VERTICAL)
-		startSearchLabel = Gtk.Label("Input a search request and press enter...", xalign=0)
-		self.SearchResultsBox.pack_start(startSearchLabel, False, True, 0)
-		self.SearchDeckStack = []
-		self.ScrolledWindow.add(self.SearchResultsBox)
-		self.SearchDeck.add(self.ScrolledWindow)
+    def __init__(self, GuiBuilder, backButton, **kwargs):
+        super().__init__(**kwargs)
+        self.GuiBuilder = GuiBuilder
+        self.BackButton = backButton
+        self.SearchBarEntry.connect("activate", self.search)
+        self.SearchBarEntry.set_placeholder_text("Search")
+        self.ScrolledWindow = Gtk.ScrolledWindow()
+        self.SearchResultsBox = Gtk.Box(orientation=Gtk.Orientation.VERTICAL)
+        startSearchLabel = Gtk.Label("Input a search request and press enter...", xalign=0)
+        self.SearchResultsBox.pack_start(startSearchLabel, False, True, 0)
+        self.SearchDeckStack = []
+        self.ScrolledWindow.add(self.SearchResultsBox)
+        self.SearchDeck.add(self.ScrolledWindow)
 
-		def onDeckTransitionRunning(deck, _):
-			if len(self.SearchDeckStack) == 0:
-				return
-			if not deck.get_transition_running():
-				visible_child = deck.get_visible_child()
-				while visible_child != self.SearchDeckStack[-1]:
-					deck.remove(self.SearchDeckStack.pop())
-					if len(self.SearchDeckStack) == 0:
-						return
+        def onDeckTransitionRunning(deck, _):
+            if len(self.SearchDeckStack) == 0:
+                return
+            if not deck.get_transition_running():
+                visible_child = deck.get_visible_child()
+                while visible_child != self.SearchDeckStack[-1]:
+                    deck.remove(self.SearchDeckStack.pop())
+                    if len(self.SearchDeckStack) == 0:
+                        return
 
-		def onDecksVisibleChildChanged(deck, _):
-			if self.SearchDeck.get_visible_child() == self.ScrolledWindow:
-				self.BackButton.hide()
-			else:
-				self.BackButton.show()
+        def onDecksVisibleChildChanged(deck, _):
+            if self.SearchDeck.get_visible_child() == self.ScrolledWindow:
+                self.BackButton.hide()
+            else:
+                self.BackButton.show()
 
-		self.SearchDeck.connect("notify::transition-running", onDeckTransitionRunning)
-		self.SearchDeck.connect("notify::visible-child", onDecksVisibleChildChanged)
+        self.SearchDeck.connect("notify::transition-running", onDeckTransitionRunning)
+        self.SearchDeck.connect("notify::visible-child", onDecksVisibleChildChanged)
 
-		def onBackButtonClicked(button):
-			self.popOverlay()
+        def onBackButtonClicked(button):
+            self.popOverlay()
 
-		self.BackButton.connect("clicked", onBackButtonClicked)
+        self.BackButton.connect("clicked", onBackButtonClicked)
 
-		self.show_all()
+        self.show_all()
 
-	def __setNewOverlayBox(self, newBox):
-		self.ScrolledWindow.remove(self.SearchResultsBox)
-		self.SearchResultsBox = newBox
-		self.ScrolledWindow.add(self.SearchResultsBox)
-		self.show_all()
+    def __setNewOverlayBox(self, newBox):
+        self.ScrolledWindow.remove(self.SearchResultsBox)
+        self.SearchResultsBox = newBox
+        self.ScrolledWindow.add(self.SearchResultsBox)
+        self.show_all()
 
-	def popOverlay(self):
-		if len(self.SearchDeckStack) == 1:
-			self.SearchDeck.set_visible_child(self.ScrolledWindow)
-		else:
-			self.SearchDeck.set_visible_child(self.SearchDeckStack[-2])
+    def popOverlay(self):
+        if len(self.SearchDeckStack) == 1:
+            self.SearchDeck.set_visible_child(self.ScrolledWindow)
+        else:
+            self.SearchDeck.set_visible_child(self.SearchDeckStack[-2])
 
-	def pushOverlay(self, newBox):
-		scrolledWrapper = Gtk.ScrolledWindow()
-		scrolledWrapper.add(newBox)
-		self.SearchDeckStack.append(scrolledWrapper)
-		self.SearchDeck.add(scrolledWrapper)
-		scrolledWrapper.show_all()
-		self.SearchDeck.set_visible_child(scrolledWrapper)
+    def pushOverlay(self, newBox):
+        scrolledWrapper = Gtk.ScrolledWindow()
+        scrolledWrapper.add(newBox)
+        self.SearchDeckStack.append(scrolledWrapper)
+        self.SearchDeck.add(scrolledWrapper)
+        scrolledWrapper.show_all()
+        self.SearchDeck.set_visible_child(scrolledWrapper)
 
-	def setSearchResults(self, widget):
-		for child in self.SearchDeck.get_children()[1:]:
-			self.SearchDeck.remove(child)
-		self.ScrolledWindow.remove(self.ScrolledWindow.get_child())
-		self.ScrolledWindow.add(widget)
-		self.SearchDeck.set_visible_child(self.ScrolledWindow)
+    def setSearchResults(self, widget):
+        for child in self.SearchDeck.get_children()[1:]:
+            self.SearchDeck.remove(child)
+        self.ScrolledWindow.remove(self.ScrolledWindow.get_child())
+        self.ScrolledWindow.add(widget)
+        self.SearchDeck.set_visible_child(self.ScrolledWindow)
 
-	def setNewSearch(self, text):
-		searchResponse = sp.get().search(text, limit=4, offset=0, type='track,playlist,show,episode,album,artist')
-		def _setNewSearch():
-			newSearchResultsBox = Gtk.Box(orientation=Gtk.Orientation.VERTICAL)
-			self.GuiBuilder.buildSearchResults(newSearchResultsBox, searchResponse, self.pushOverlay)
-			self.remove(self.SearchResultsBox)
-			self.setSearchResults(newSearchResultsBox)
-		GLib.idle_add(_setNewSearch)
+    def setNewSearch(self, text):
+        searchResponse = sp.get().search(text, limit=4, offset=0, type='track,playlist,show,episode,album,artist')
+        def _setNewSearch():
+            newSearchResultsBox = Gtk.Box(orientation=Gtk.Orientation.VERTICAL)
+            self.GuiBuilder.buildSearchResults(newSearchResultsBox, searchResponse, self.pushOverlay)
+            self.remove(self.SearchResultsBox)
+            self.setSearchResults(newSearchResultsBox)
+        GLib.idle_add(_setNewSearch)
 
-	def search(self, entry):
-		text = entry.get_buffer().get_text()
-		thread = threading.Thread(target=self.setNewSearch, daemon=True, args=(text,))
-		thread.start()
+    def search(self, entry):
+        text = entry.get_buffer().get_text()
+        thread = threading.Thread(target=self.setNewSearch, daemon=True, args=(text,))
+        thread.start()
