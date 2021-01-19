@@ -21,7 +21,7 @@ from spotipy import SpotifyException
 from gi.repository import Gtk, GLib, Gio
 
 from .spotify import Spotify as sp
-from .coverArtLoader import Dimensions
+from .cover_art_loader import Dimensions
 
 
 @Gtk.Template(resource_path='/xyz/merlinx/Spotipyne/simple_controls.ui')

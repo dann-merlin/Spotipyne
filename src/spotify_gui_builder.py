@@ -22,7 +22,7 @@ from functools import reduce
 
 from gi.repository import Gtk, GLib, Pango
 
-from .coverArtLoader import Dimensions
+from .cover_art_loader import Dimensions
 from .spotify import Spotify as sp
 
 # TODO maybe just remove the non genericRows
