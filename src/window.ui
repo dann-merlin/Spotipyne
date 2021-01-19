@@ -9,37 +9,37 @@
     <property name="default-width">1000</property>
     <property name="default-height">600</property>
     <child>
-      <object class="GtkBox" id="MainBox">
+      <object class="GtkBox" id="main_box">
         <property name="visible">True</property>
         <property name="can-focus">False</property>
         <property name="vexpand">True</property>
         <property name="orientation">vertical</property>
         <child>
-          <object class="HdyHeaderBar" id="Headerbar">
+          <object class="HdyHeaderBar" id="headerbar">
             <property name="visible">True</property>
             <property name="can-focus">False</property>
             <property name="show-close-button">True</property>
             <property name="centering-policy">strict</property>
             <child type="title">
-              <object class="HdyViewSwitcherTitle" id="HeaderbarSwitcher">
+              <object class="HdyViewSwitcherTitle" id="headerbar_switcher">
                 <property name="visible">True</property>
                 <property name="can-focus">False</property>
-                <property name="stack">MainStack</property>
+                <property name="stack">main_stack</property>
                 <property name="title">Spotipyne</property>
               </object>
             </child>
             <child>
-              <object class="GtkStack" id="BackButtonStack">
+              <object class="GtkStack" id="back_button_stack">
                 <property name="visible">True</property>
                 <property name="can-focus">False</property>
                 <child>
-                  <object class="GtkButtonBox" id="BackButtonBoxPlaylists">
+                  <object class="GtkButtonBox" id="back_button_box_playlists">
                     <property name="visible">True</property>
                     <property name="can-focus">False</property>
                     <property name="homogeneous">True</property>
                     <property name="layout-style">expand</property>
                     <child>
-                      <object class="GtkButton" id="BackButtonPlaylists">
+                      <object class="GtkButton" id="back_button_playlists">
                         <property name="can-focus">True</property>
                         <property name="receives-default">True</property>
                         <child>
@@ -63,13 +63,13 @@
                   </packing>
                 </child>
                 <child>
-                  <object class="GtkButtonBox" id="BackButtonBoxSearch">
+                  <object class="GtkButtonBox" id="back_button_box_search">
                     <property name="visible">True</property>
                     <property name="can-focus">False</property>
                     <property name="homogeneous">True</property>
                     <property name="layout-style">expand</property>
                     <child>
-                      <object class="GtkButton" id="BackButtonSearch">
+                      <object class="GtkButton" id="back_button_search">
                         <property name="can-focus">True</property>
                         <property name="receives-default">True</property>
                         <child>
@@ -103,39 +103,39 @@
           </packing>
         </child>
         <child>
-          <object class="HdyDeck" id="PlayerDeck">
+          <object class="HdyDeck" id="player_deck">
             <property name="visible">True</property>
             <property name="can-focus">False</property>
             <property name="orientation">vertical</property>
             <property name="transition-duration">500</property>
             <child>
-              <object class="GtkBox" id="SimpleControlsParent">
+              <object class="GtkBox" id="simple_controls_parent">
                 <property name="visible">True</property>
                 <property name="can-focus">False</property>
                 <property name="orientation">vertical</property>
                 <child>
-                  <object class="GtkStack" id="MainStack">
+                  <object class="GtkStack" id="main_stack">
                     <property name="visible">True</property>
                     <property name="can-focus">False</property>
                     <property name="transition-type">slide-left-right</property>
                     <child>
-                      <object class="HdyLeaflet" id="LibraryOverview">
+                      <object class="HdyLeaflet" id="library_overview">
                         <property name="visible">True</property>
                         <property name="can-focus">False</property>
                         <property name="hhomogeneous-folded">False</property>
-                        <property name="visible-child">PrimaryBox</property>
+                        <property name="visible-child">primary_box</property>
                         <property name="visible-child-name">0</property>
                         <property name="transition-type">under</property>
                         <property name="interpolate-size">True</property>
                         <property name="can-swipe-back">True</property>
                         <child>
-                          <object class="GtkBox" id="PrimaryBox">
+                          <object class="GtkBox" id="primary_box">
                             <property name="visible">True</property>
                             <property name="can-focus">False</property>
                             <property name="hexpand">False</property>
                             <property name="orientation">vertical</property>
                             <child>
-                              <object class="GtkLabel" id="PlaylistsListTitle">
+                              <object class="GtkLabel" id="playlists_list_title">
                                 <property name="visible">True</property>
                                 <property name="can-focus">False</property>
                                 <property name="hexpand">False</property>
@@ -148,7 +148,7 @@
                               </packing>
                             </child>
                             <child>
-                              <object class="GtkScrolledWindow" id="PrimaryViewport">
+                              <object class="GtkScrolledWindow" id="primary_viewport">
                                 <property name="visible">True</property>
                                 <property name="can-focus">True</property>
                                 <property name="hexpand">False</property>
@@ -161,7 +161,7 @@
                                     <property name="can-focus">False</property>
                                     <property name="hexpand">False</property>
                                     <child>
-                                      <object class="GtkListBox" id="PlaylistsList">
+                                      <object class="GtkListBox" id="playlists_list">
                                         <property name="visible">True</property>
                                         <property name="can-focus">False</property>
                                         <property name="hexpand">False</property>
@@ -182,13 +182,13 @@
                           </packing>
                         </child>
                         <child>
-                          <object class="GtkBox" id="SecondaryBox">
+                          <object class="GtkBox" id="secondary_box">
                             <property name="visible">True</property>
                             <property name="can-focus">False</property>
                             <property name="hexpand">True</property>
                             <property name="orientation">vertical</property>
                             <child>
-                              <object class="GtkLabel" id="PlaylistTracksLabel">
+                              <object class="GtkLabel" id="playlist_tracks_label">
                                 <property name="visible">True</property>
                                 <property name="can-focus">False</property>
                                 <property name="hexpand">True</property>
@@ -208,11 +208,11 @@
                                 <property name="shadow-type">in</property>
                                 <property name="propagate-natural-width">True</property>
                                 <child>
-                                  <object class="GtkViewport" id="SecondaryViewport">
+                                  <object class="GtkViewport" id="secondary_viewport">
                                     <property name="visible">True</property>
                                     <property name="can-focus">False</property>
                                     <child>
-                                      <object class="GtkListBox" id="PlaylistTracksList">
+                                      <object class="GtkListBox" id="playlist_tracks_list">
                                         <property name="visible">True</property>
                                         <property name="can-focus">False</property>
                                         <property name="hexpand">True</property>
@@ -240,12 +240,12 @@
                       </packing>
                     </child>
                     <child>
-                      <object class="GtkBox" id="TestPage">
+                      <object class="GtkBox" id="test_page">
                         <property name="visible">True</property>
                         <property name="can-focus">False</property>
                         <property name="orientation">vertical</property>
                         <child>
-                          <object class="GtkRevealer" id="Revealer">
+                          <object class="GtkRevealer" id="revealer">
                             <property name="visible">True</property>
                             <property name="can-focus">False</property>
                             <property name="transition-type">slide-up</property>
@@ -267,7 +267,7 @@
                           </packing>
                         </child>
                         <child>
-                          <object class="GtkButton" id="RevealButton">
+                          <object class="GtkButton" id="reveal_button">
                             <property name="label" translatable="yes">TOGGLE!</property>
                             <property name="visible">True</property>
                             <property name="can-focus">True</property>
@@ -307,10 +307,10 @@
           </packing>
         </child>
         <child>
-          <object class="HdyViewSwitcherBar" id="BottomSwitcher">
+          <object class="HdyViewSwitcherBar" id="bottom_switcher">
             <property name="visible">True</property>
             <property name="can-focus">False</property>
-            <property name="stack">MainStack</property>
+            <property name="stack">main_stack</property>
             <property name="reveal">True</property>
           </object>
           <packing>

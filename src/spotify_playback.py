@@ -1,4 +1,4 @@
-# spotifyPlayback.py
+# spotify_playback.py
 #
 # Copyright 2020 Merlin Danner
 #
@@ -24,19 +24,20 @@ from gi.repository import GObject
 
 from .spotify import Spotify as sp
 
-from .coverArtLoader import CoverArtLoader, Dimensions, get_desired_image_for_size
+from .cover_art_loader import Dimensions
+
 
 class SpotifyPlayback(GObject.Object):
     __gtype_name__ = "SpotifyPlayback"
 
     SLEEP_TIME = 2
 
-    def __init__(self, coverArtLoader, **kwargs):
+    def __init__(self, cover_art_loader, **kwargs):
         super().__init__(**kwargs)
         self.__shuffle = False
         self.duration_ms = 1.0
         self.desired_size = 60
-        self.coverArtLoader = coverArtLoader
+        self.cover_art_loader = cover_art_loader
         self.has_playback = False
         self.devices = []
         self.devices_ids = []
@@ -44,19 +45,20 @@ class SpotifyPlayback(GObject.Object):
         self.track_uri = ""
         self.track_name = ""
         self.artists = ""
-        self.coverUrl = ""
+        self.cover_url = ""
         self.is_saved_track = False
 
-        playbackUpdateThread = threading.Thread(target=self.keepUpdating, daemon=True)
-        playbackUpdateThread.start()
+        playback_update_thread = threading.Thread(
+            target=self.keep_updating, daemon=True)
+        playback_update_thread.start()
 
-    def keepUpdating(self):
+    def keep_updating(self):
         is_playing = None
         while True:
             try:
                 pb = sp.get().current_playback()
                 devices = sp.get().devices()['devices']
-                new_devices_ids = [ dev['id'] for dev in devices ]
+                new_devices_ids = [dev['id'] for dev in devices]
                 self.devices = devices
                 if new_devices_ids != self.devices_ids:
                     self.devices_ids = new_devices_ids
@@ -87,16 +89,19 @@ class SpotifyPlayback(GObject.Object):
                     self.track_name = pb['item']['name']
                     self.artists = reduce(
                             lambda a, b:
-                            { 'name': a['name'] + ", " + b['name'] },
+                            {'name': a['name'] + ", " + b['name']},
                             pb['item']['artists'][1:],
                             pb['item']['artists'][0]
                             )['name']
                     self.track_uri = pb['item']['uri']
                     self.duration_ms = pb['item']['duration_ms']
-                    self.coverUrl = pb['item']['album']['images']
+                    self.cover_url = pb['item']['album']['images']
                     self.emit("track_changed", self.track_uri)
-                    if sp.get().current_user_saved_tracks_contains([self.track_uri])[0]:
-                        self.emit("is_saved_track_changed", self.is_saved_track);
+                    if sp.get().current_user_saved_tracks_contains(
+                            [self.track_uri])[0]:
+                        self.emit(
+                            "is_saved_track_changed",
+                            self.is_saved_track)
                 self.progress_fraction = self.progress_ms / self.duration_ms
             except Exception as e:
                 print(e)
@@ -133,7 +138,8 @@ class SpotifyPlayback(GObject.Object):
     def set_current_cover_art(self, image, dim=None):
         if dim is None:
             dim = Dimensions(self.desired_size, self.desired_size, True)
-        self.coverArtLoader.asyncUpdateCover(image, self.track_uri, self.coverUrl, dim)
+        self.cover_art_loader.async_update_cover(
+            image, self.track_uri, self.cover_url, dim)
 
     def get_track_name(self):
         return self.track_name

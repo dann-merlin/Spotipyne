@@ -24,6 +24,7 @@ from xdg import BaseDirectory
 import spotipy
 from spotipy.oauth2 import SpotifyOAuth
 
+
 class Spotify:
 
     __sp = None
@@ -36,7 +37,8 @@ class Spotify:
 
     @classmethod
     def get_username_cache_path(cls):
-        return BaseDirectory.save_cache_path(Config.applicationID) + '/' + 'username'
+        return BaseDirectory.save_cache_path(
+            Config.applicationID) + '/' + 'username'
 
     @classmethod
     def save_username_to_cache(cls, username):
@@ -69,9 +71,14 @@ class Spotify:
     @classmethod
     def build_auth_manager(cls):
 
-        clientID = os.getenv("SPOTIPY_CLIENT_ID",  "72d3a0443ae547db8e6471841f0ac6d7")
-        # This is obviously a "secret", but honestly nobody wants to go make a spotify developer account
-        clientSecret = os.getenv("SPOTIPY_CLIENT_SECRET", "ac0ed069a1f4470c9068690a19b5960e")
+        client_ID = os.getenv(
+            "SPOTIPY_CLIENT_ID",
+            "72d3a0443ae547db8e6471841f0ac6d7")
+        # This is obviously a "secret", but honestly nobody wants to go make a
+        # spotify developer account
+        client_secret = os.getenv(
+            "SPOTIPY_CLIENT_SECRET",
+            "ac0ed069a1f4470c9068690a19b5960e")
 
         cache_path = cls.get_cached_token_path()
 
@@ -82,19 +89,20 @@ class Spotify:
             raise Exception("Username was not set yet!")
 
         sp_oauth = SpotifyOAuth(
-                username = cls.username_backup if user is None else user,
-                client_id = clientID,
-                client_secret = clientSecret,
-                scope = scope,
-                cache_path = cache_path,
-                redirect_uri = "http://127.0.0.1:8080"
+                username=cls.username_backup if user is None else user,
+                client_id=client_ID,
+                client_secret=client_secret,
+                scope=scope,
+                cache_path=cache_path,
+                redirect_uri="http://127.0.0.1:8080"
             )
         return sp_oauth
 
-
     def __init__(self, auth_manager):
         if self.__sp:
-            print("There is an error in the code. The constructor of the spotify object should not be called more than once!", file=sys.stderr)
+            print(
+                "There is an error in the code. The constructor of the spotify object should not be called more than once!",
+                file=sys.stderr)
             sys.exit(1)
         self.sp = spotipy.Spotify(auth_manager=auth_manager)
 
@@ -106,9 +114,15 @@ class Spotify:
             return cls.__sp.sp
 
     @classmethod
-    def start_playback(cls, context_uri=None, offset=None, device_id=None, uris=None, recursion_protection=False):
+    def start_playback(
+            cls, context_uri=None, offset=None, device_id=None, uris=None,
+            recursion_protection=False):
         try:
-            cls.get().start_playback(context_uri=context_uri, offset=offset, uris=uris, device_id=device_id)
+            cls.get().start_playback(
+                context_uri=context_uri,
+                offset=offset,
+                uris=uris,
+                device_id=device_id)
         except spotipy.SpotifyException as e:
             if "No active device found" in str(e):
                 if recursion_protection:

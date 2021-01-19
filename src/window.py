@@ -15,147 +15,152 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-import threading
+from gi.repository import Gtk, Handy, GObject
 
-import gi
-gi.require_version('Handy', '1')
-from gi.repository import Gtk, Handy, GObject, GLib
-
-from .coverArtLoader import CoverArtLoader
-from .spotifyGuiBuilder import SpotifyGuiBuilder
-from .spotify import Spotify as sp
-from .spotifyPlayback import SpotifyPlayback
-from .simpleControls import SimpleControls
-from .searchOverview import SearchOverview
+from .cover_art_loader import CoverArtLoader
+from .spotify_gui_builder import SpotifyGuiBuilder
+from .spotify_playback import SpotifyPlayback
+from .simple_controls import SimpleControls
+from .search_overview import SearchOverview
 from .login import Login
+
 
 @Gtk.Template(resource_path='/xyz/merlinx/Spotipyne/window.ui')
 class SpotipyneWindow(Handy.ApplicationWindow):
     __gtype_name__ = 'SpotipyneWindow'
 
     Handy.init()
-    HeaderbarSwitcher = Gtk.Template.Child()
-    BottomSwitcher = Gtk.Template.Child()
-    PlayerDeck = Gtk.Template.Child()
-    MainStack = Gtk.Template.Child()
-    LibraryOverview = Gtk.Template.Child()
-    PrimaryBox = Gtk.Template.Child()
-    PlaylistsList = Gtk.Template.Child()
-    SecondaryBox = Gtk.Template.Child()
-    PlaylistTracksList = Gtk.Template.Child()
-    BackButtonStack = Gtk.Template.Child()
-    BackButtonPlaylists = Gtk.Template.Child()
-    BackButtonSearch = Gtk.Template.Child()
-    SimpleControlsParent = Gtk.Template.Child()
-    Revealer = Gtk.Template.Child()
-    RevealButton = Gtk.Template.Child()
-    SecondaryViewport = Gtk.Template.Child()
+    headerbar_switcher = Gtk.Template.Child()
+    bottom_switcher = Gtk.Template.Child()
+    player_deck = Gtk.Template.Child()
+    main_stack = Gtk.Template.Child()
+    library_overview = Gtk.Template.Child()
+    primary_box = Gtk.Template.Child()
+    playlists_list = Gtk.Template.Child()
+    secondary_box = Gtk.Template.Child()
+    playlist_tracks_list = Gtk.Template.Child()
+    back_button_stack = Gtk.Template.Child()
+    back_button_playlists = Gtk.Template.Child()
+    back_button_search = Gtk.Template.Child()
+    simple_controls_parent = Gtk.Template.Child()
+    revealer = Gtk.Template.Child()
+    reveal_button = Gtk.Template.Child()
+    secondary_viewport = Gtk.Template.Child()
 
-    def onPlaylistsListRowActivated(self, playlistsList, playlistRow):
-        def loadPlaylistTracks():
-            builtPage = self.spGUI.buildPlaylistPage(playlistRow.getUri())
+    def on_playlists_list_row_activated(self, _playlists_list, playlist_row):
+        def load_playlist_tracks():
+            built_page = self.sp_gui.build_playlist_page(
+                playlist_row.get_uri()
+            )
             # TODO has the next line to be commented in?
-            self.SecondaryViewport.remove(self.SecondaryViewport.get_child())
-            self.SecondaryViewport.add(builtPage)
-            self.SecondaryViewport.show_all()
+            self.secondary_viewport.remove(self.secondary_viewport.get_child())
+            self.secondary_viewport.add(built_page)
+            self.secondary_viewport.show_all()
 
-        loadPlaylistTracks()
-        self.LibraryOverview.set_visible_child(self.SecondaryBox)
-        # self.spGUI.asyncLoadPlaylistTracks(self.PlaylistTracksList, playlistRow.getUri().split(":")[-1], self.TracksListResumeEvent, self.TracksListStopEvent)
+        load_playlist_tracks()
+        self.library_overview.set_visible_child(self.secondary_box)
 
-    def toggleReveal(self, button):
-        self.Revealer.set_reveal_child( not self.Revealer.get_reveal_child())
+    def toggle_reveal(self, _button):
+        self.revealer.set_reveal_child(not self.revealer.get_reveal_child())
 
     def playlist_tracks_focused(self):
-        return self.LibraryOverview.get_visible_child() == self.SecondaryBox
+        return self.library_overview.get_visible_child() == self.secondary_box
 
-    def initCoverArtLoader(self):
-        self.coverArtLoader = CoverArtLoader()
+    def init_cover_art_loader(self):
+        self.cover_art_loader = CoverArtLoader()
 
-    def initLibraryOverview(self):
+    def init_library_overview(self):
 
-        def initLists():
-            self.TracksListStopEvent = threading.Event()
-            self.TracksListResumeEvent = threading.Event()
-            self.TracksListResumeEvent.set()
-            self.PlaylistsList.connect("row-activated", self.onPlaylistsListRowActivated)
-            self.spGUI.asyncLoadPlaylists(self.PlaylistsList)
+        def init_lists():
+            self.playlists_list.connect(
+                "row-activated", self.on_playlists_list_row_activated)
+            self.sp_gui.async_load_playlists(self.playlists_list)
 
-        initLists()
+        init_lists()
 
-        def onFoldedChange(playlistsOverview, _):
+        def on_folded_change(playlists_overview, _):
             # For some reason the folded variable can not be trusted
-            if playlistsOverview.get_folded():
-                if playlistsOverview.get_visible_child() == self.PrimaryBox:
-                    self.BackButtonPlaylists.hide()
+            if playlists_overview.get_folded():
+                if playlists_overview.get_visible_child() == self.primary_box:
+                    self.back_button_playlists.hide()
                 else:
-                    self.BackButtonPlaylists.show()
+                    self.back_button_playlists.show()
             else:
-                self.BackButtonPlaylists.hide()
+                self.back_button_playlists.hide()
 
-        def onChildSwitched(playlistsOverview, _):
-            if playlistsOverview.get_visible_child() == self.PrimaryBox:
-                self.BackButtonPlaylists.hide()
+        def on_child_switched(playlists_overview, _):
+            if playlists_overview.get_visible_child() == self.primary_box:
+                self.back_button_playlists.hide()
             else:
-                if playlistsOverview.get_folded():
-                    self.BackButtonPlaylists.show()
+                if playlists_overview.get_folded():
+                    self.back_button_playlists.show()
                 else:
-                    self.BackButtonPlaylists.hide()
+                    self.back_button_playlists.hide()
 
-        def onClickedBackButton(backButton):
-            self.LibraryOverview.set_visible_child(self.PrimaryBox)
+        def on_clicked_back_button(_back_button):
+            self.library_overview.set_visible_child(self.primary_box)
 
-        self.LibraryOverview.connect("notify::folded", onFoldedChange)
-        self.LibraryOverview.connect("notify::visible-child", onChildSwitched)
-        self.BackButtonPlaylists.connect("clicked", onClickedBackButton)
+        self.library_overview.connect("notify::folded", on_folded_change)
+        self.library_overview.connect(
+            "notify::visible-child", on_child_switched)
+        self.back_button_playlists.connect("clicked", on_clicked_back_button)
 
-    def initSpotifyPlayback(self):
-        self.spotifyPlayback = SpotifyPlayback(self.coverArtLoader)
+    def init_spotify_playback(self):
+        self.spotify_playback = SpotifyPlayback(self.cover_art_loader)
 
-    def initSimpleControls(self):
-        self.simpleControls = SimpleControls(self.spotifyPlayback)
-        self.SimpleControlsParent.pack_start(self.simpleControls, False, True, 0)
-        self.simpleControls.set_reveal_child(False)
+    def init_simple_controls(self):
+        self.simple_controls = SimpleControls(self.spotify_playback)
+        self.simple_controls_parent.pack_start(
+            self.simple_controls, False, True, 0)
+        self.simple_controls.set_reveal_child(False)
 
-    def initSearchOverview(self):
-        self.searchOverview = SearchOverview(self.spGUI, self.BackButtonSearch)
-        self.MainStack.add_titled(self.searchOverview, 'Search', 'Search')
-        self.MainStack.child_set_property(self.searchOverview, "icon-name", "edit-find-symbolic")
+    def init_search_overview(self):
+        self.search_overview = SearchOverview(
+            self.sp_gui, self.back_button_search)
+        self.main_stack.add_titled(self.search_overview, 'Search', 'Search')
+        self.main_stack.child_set_property(
+            self.search_overview, "icon-name", "edit-find-symbolic")
 
-    def initBackButtons(self):
-        self.BackButtonStack.child_set_property
-        self.MainStack.bind_property("visible-child-name", self.BackButtonStack, "visible-child-name")
+    def init_back_buttons(self):
+        # TODO what the hell did i think?
+        # self.BackButtonStack.child_set_property
+        self.main_stack.bind_property(
+            "visible-child-name",
+            self.back_button_stack,
+            "visible-child-name")
 
-    def initLogin(self):
-        self.LoginPage = Login(self.onLoggedIn)
-        self.PlayerDeck.add(self.LoginPage)
-        self.PlayerDeck.set_visible_child(self.LoginPage)
-        self.PlayerDeck.show_all()
+    def init_login(self):
+        self.login_page = Login(self.on_logged_in)
+        self.player_deck.add(self.login_page)
+        self.player_deck.set_visible_child(self.login_page)
+        self.player_deck.show_all()
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
 
-        self.initLogin()
+        self.init_login()
 
-    def onLoggedIn(self):
+    def on_logged_in(self):
 
-        self.PlayerDeck.remove(self.LoginPage)
-        self.PlayerDeck.set_visible_child(self.PlayerDeck.get_children()[0])
+        self.player_deck.remove(self.login_page)
+        self.player_deck.set_visible_child(self.player_deck.get_children()[0])
 
-        self.initCoverArtLoader()
+        self.init_cover_art_loader()
 
-        self.spGUI = SpotifyGuiBuilder(self.coverArtLoader)
+        self.sp_gui = SpotifyGuiBuilder(self.cover_art_loader)
 
-        self.initLibraryOverview()
+        self.init_library_overview()
 
-        self.initSearchOverview()
+        self.init_search_overview()
 
-        self.initSpotifyPlayback()
+        self.init_spotify_playback()
 
-        self.initSimpleControls()
+        self.init_simple_controls()
 
-        self.initBackButtons()
+        self.init_back_buttons()
 
-        self.HeaderbarSwitcher.bind_property("title-visible", self.BottomSwitcher, "reveal", GObject.BindingFlags.SYNC_CREATE)
+        self.headerbar_switcher.bind_property("title-visible",
+                                              self.bottom_switcher, "reveal",
+                                              GObject.BindingFlags.SYNC_CREATE)
 
-        self.RevealButton.connect("clicked", self.toggleReveal)
+        self.reveal_button.connect("clicked", self.toggle_reveal)

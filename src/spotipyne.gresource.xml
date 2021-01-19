@@ -3,7 +3,7 @@
   <gresource prefix="/xyz/merlinx/Spotipyne">
     <file>window.ui</file>
     <file>login.ui</file>
-    <file>simpleControls.ui</file>
-    <file>searchOverview.ui</file>
+    <file>simple_controls.ui</file>
+    <file>search_overview.ui</file>
   </gresource>
 </gresources>
