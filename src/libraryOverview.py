@@ -22,6 +22,7 @@ from .contentDeck import ContentDeck
 class LibraryOverview(Handy.Leaflet):
 	__gtype_name__ = 'LibraryOverview'
 
+	PrimaryBox = Gtk.Template.Child()
 	PrimaryViewport = Gtk.Template.Child()
 	SecondaryBox = Gtk.Template.Child()
 
@@ -39,13 +40,22 @@ class LibraryOverview(Handy.Leaflet):
 
 		# TODO Build the list of playlists (also add the saved songs and maybe somehow the spotify created playlists
 		# TODO add callback for those playlists to load the PlaylistPage
+		def setWidgetFunction(widget):
+			self.SecondaryBox.remove(self.ContentDeck)
+			self.ContentDeck = ContentDeck(Gtk.Label("Select one of the options in the library."))
+			self.SecondaryBox.pack_start(self.ContentDeck, True, True, 0)
+			self.ContentDeck.push(widget)
+			self.set_visible_child(self.SecondaryBox)
+		def pushWidgetFunction(widget):
+			self.ContentDeck.push(widget)
+			self.set_visible_child(self.SecondaryBox)
 		self.Library = Gtk.ListBox()
-		self.GuiBuilder.loadLibrary(self.Library)
+		self.GuiBuilder.loadLibrary(self.Library, setWidgetFunction, pushWidgetFunction)
 		self.PrimaryViewport.add(self.Library)
 		self.SecondaryBox.pack_start(self.ContentDeck, True, True, 0)
 		self.show_all()
 
-	def __onFoldedChange(self, _):
+	def __onFoldedChange(self, _overview, _folded):
 		if self.get_folded():
 			if self.get_visible_child() == self.PrimaryBox:
 				self.BackButton.hide()
@@ -54,7 +64,7 @@ class LibraryOverview(Handy.Leaflet):
 		else:
 			self.BackButton.hide()
 
-	def __onChildSwitched(self, _):
+	def __onChildSwitched(self, _overview, _child):
 		if self.get_visible_child() == self.PrimaryBox:
 			self.BackButton.hide()
 		else:
@@ -64,7 +74,6 @@ class LibraryOverview(Handy.Leaflet):
 				self.BackButton.hide()
 
 	def __onBackButtonClicked(self, _):
+		self.ContentDeck.pop()
 		if self.ContentDeck.isEmpty():
 			self.set_visible_child(self.PrimaryBox)
-		else:
-			self.ContentDeck.pop()

@@ -87,4 +87,4 @@ class ContentDeck(Handy.Deck):
 		self.Stack = [self.DefaultWidget]
 
 	def isEmpty(self):
-		return self.get_visible_child() == self.DefaultWidget
+		return len(self.Stack) <= 0

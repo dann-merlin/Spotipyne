@@ -85,6 +85,22 @@ class SpotifyGuiBuilder:
 			allPlaylists += playlistsResponse['items']
 		return allPlaylists
 
+	def getSavedTracks(self):
+		allTracks = []
+		offset = 0
+		pageSize = 50
+		keepGoing = True
+		while keepGoing:
+			tracksResponse = sp.get().current_user_saved_tracks(
+				limit=pageSize,
+				offset=offset
+			)
+			keepGoing = tracksResponse['next'] != None
+			offset += pageSize
+			allTracks += tracksResponse['items']
+		return [trackResponse['track'] for trackResponse in allTracks]
+
+
 	def getPlaylistTracks(self, playlist_id):
 		allTracks = []
 		offset = 0
@@ -118,7 +134,7 @@ class SpotifyGuiBuilder:
 
 		for chunk in chunks(raw_data, 10):
 			GLib.idle_add(loadChunk, chunk, priority=GLib.PRIORITY_LOW)
-			time.sleep(1)
+			time.sleep(0.5)
 
 	def loadPlaylistTracksList(self, playlist_tracks_list, playlist_id):
 		playlist_tracks = self.getPlaylistTracks(playlist_id)
@@ -133,6 +149,32 @@ class SpotifyGuiBuilder:
 	def buildAlbumPage(self, album_uri):
 		vbox = Gtk.Box(orientation=Gtk.Orientation.VERTICAL)
 		vbox.pack_start(Gtk.Label("Album " + album_uri), False, True, 0)
+		vbox.show_all()
+		return vbox
+
+	def buildSavedTracksPage(self):
+		vbox = Gtk.Box(orientation=Gtk.Orientation.VERTICAL)
+		tracks_list = Gtk.ListBox()
+		image = Gtk.Image.new_from_icon_name("emblem-favorite-symbolic.symbolic", Gtk.IconSize.DIALOG)
+		label = Gtk.Label("Liked Songs", xalign=0)
+		vbox.pack_start(image, False, True, 0)
+		vbox.pack_start(label, False, True, 0)
+		vbox.pack_start(tracks_list, False, True, 0)
+		def onSavedTracksListRowActivated(listbox, row):
+			pass
+			# def helper():
+			# 	sp.start_playback(offset={"uri": row.getUri()})
+			# sp_thread = threading.Thread(daemon=True, target=helper)
+			# sp_thread.start()
+
+		tracks_list.connect('row-activated', onSavedTracksListRowActivated)
+		def loadSavedTracksList():
+			saved_tracks = self.getSavedTracks()
+			self.loadGenericList(tracks_list, saved_tracks, self.buildTrackEntry)
+			pass
+
+		threading.Thread(daemon=True, target=loadSavedTracksList).start()
+
 		vbox.show_all()
 		return vbox
 
@@ -320,7 +362,9 @@ class SpotifyGuiBuilder:
 			_searchResultHelper(searchQuery['type'], searchQuery['name'], searchQuery['buildEntryFunction'], searchQuery['activationHandler'])
 		searchResultBox.show_all()
 
-	def loadLibrary(self, listbox, pushWidgetFunction):
+	# TODO pushWidgetFunction to be used for example when clicking on the
+	# artist inside the playlistpage
+	def loadLibrary(self, listbox, setWidgetFunction, _pushWidgetFunction):
 		listbox.set_placeholder(Gtk.Label("Loading library..."))
 
 		def _load_library_helper():
@@ -328,32 +372,24 @@ class SpotifyGuiBuilder:
 				def buildSavedTracksEntry():
 					fakePlaylistResponse = {
 						'uri': 'Saved Tracks',
-						'name': 'Saved Tracks',
+						'name': 'Liked Songs',
 						'images': None
 					}
 					return self.buildPlaylistEntry(fakePlaylistResponse)
 
 				savedTracksEntry = buildSavedTracksEntry()
 				listbox.insert(savedTracksEntry, 0)
-				def onRowActivated(listbox, entry):
-					def inBackground():
-						def getData():
-							if entry.getUri() == 'Saved Tracks':
-								return self.getSavedTracks()
-							else:
-								return self.getPlaylistTracks(playlist_uri.split(':')[-1])
-						data = getData()
-						def pushData():
-							if entry.getUri() == 'Saved Tracks':
-								# TODO all of this...
-							widget = buildPlaylistPage(
-							pushWidgetFunction(widget)
-						GLib.idle_add(pushData)
+			def onRowActivated(listbox, entry):
+				if entry.getUri() == 'Saved Tracks':
+					widget = self.buildSavedTracksPage() # TODO implement that function
+				else:
+					widget = self.buildPlaylistPage(entry.getUri());
+				setWidgetFunction(widget)
 
-					threading.Thread(daemon=True, target=inBackground).start()
+				# threading.Thread(daemon=True, target=inBackground).start()
 
-				listbox.connect("row-activated", onRowActivated)
 
+			listbox.connect("row-activated", onRowActivated)
 			GLib.idle_add(loadSavedTracksEntry)
 			playlists = self.getPlaylists()
 			self.loadGenericList(listbox, playlists, self.buildPlaylistEntry)
