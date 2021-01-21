@@ -1,4 +1,4 @@
-# spotify_gui_builder.py
+# spotifyGuiBuilder.py
 #
 # Copyright 2020 Merlin Danner
 #
@@ -22,7 +22,7 @@ from functools import reduce
 
 from gi.repository import Gtk, GLib, Pango
 
-from .cover_art_loader import Dimensions
+from .coverArtLoader import Dimensions
 from .spotify import Spotify as sp
 
 # TODO maybe just remove the non genericRows

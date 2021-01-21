@@ -17,11 +17,11 @@
 
 from gi.repository import Gtk, Handy, GObject
 
-from .cover_art_loader import CoverArtLoader
-from .spotify_gui_builder import SpotifyGuiBuilder
-from .spotify_playback import SpotifyPlayback
-from .simple_controls import SimpleControls
-from .search_overview import SearchOverview
+from .coverArtLoader import CoverArtLoader
+from .spotifyGuiBuilder import SpotifyGuiBuilder
+from .spotifyPlayback import SpotifyPlayback
+from .simpleControls import SimpleControls
+from .searchOverview import SearchOverview
 from .login import Login
 
 

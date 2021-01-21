@@ -1,4 +1,4 @@
-# search_overview.py
+# searchOverview.py
 #
 # Copyright 2020 Merlin Danner
 #
@@ -23,7 +23,7 @@ from gi.repository import Gtk, GLib
 from .spotify import Spotify as sp
 
 
-@Gtk.Template(resource_path='/xyz/merlinx/Spotipyne/search_overview.ui')
+@Gtk.Template(resource_path='/xyz/merlinx/Spotipyne/searchOverview.ui')
 class SearchOverview(Gtk.Box):
     __gtype_name__ = 'SearchOverview'
 

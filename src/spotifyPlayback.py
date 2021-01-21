@@ -24,7 +24,7 @@ from gi.repository import GObject
 
 from .spotify import Spotify as sp
 
-from .cover_art_loader import Dimensions
+from .coverArtLoader import Dimensions
 
 
 class SpotifyPlayback(GObject.Object):

@@ -1,4 +1,4 @@
-# simple_controls.py
+# simpleControls.py
 #
 # Copyright 2020 Merlin Danner
 #
@@ -21,10 +21,10 @@ from spotipy import SpotifyException
 from gi.repository import Gtk, GLib, Gio
 
 from .spotify import Spotify as sp
-from .cover_art_loader import Dimensions
+from .coverArtLoader import Dimensions
 
 
-@Gtk.Template(resource_path='/xyz/merlinx/Spotipyne/simple_controls.ui')
+@Gtk.Template(resource_path='/xyz/merlinx/Spotipyne/simpleControls.ui')
 class SimpleControls(Gtk.Revealer):
     __gtype_name__ = 'SimpleControls'
 
