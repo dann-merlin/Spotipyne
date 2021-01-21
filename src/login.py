@@ -121,7 +121,10 @@ class Login(Gtk.Bin):
 
     def login_normal(self, username):
         sp.set_username_backup(username)
-        sp.get().currently_playing()
+        try:
+            sp.get().currently_playing()
+        except BrokenPipeError:
+            pass
         sp.save_username_to_cache(username)
         GLib.idle_add(self.on_logged_in)
 
