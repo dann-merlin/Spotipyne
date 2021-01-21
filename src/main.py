@@ -15,15 +15,13 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+from .config import Config
+from .window import SpotipyneWindow
+from gi.repository import Gtk, Gio
 import sys
 import gi
 
 gi.require_version('Gtk', '3.0')
-
-from gi.repository import Gtk, Gio
-
-from .window import SpotipyneWindow
-from .config import Config
 
 
 class Application(Gtk.Application):
@@ -36,6 +34,7 @@ class Application(Gtk.Application):
         if not win:
             win = SpotipyneWindow(application=self)
         win.present()
+
 
 def main(version):
     app = Application()

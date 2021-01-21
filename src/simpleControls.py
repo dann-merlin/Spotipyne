@@ -24,179 +24,198 @@ from .spotifyPlayback import SpotifyPlayback
 from .spotify import Spotify as sp
 from .coverArtLoader import Dimensions
 
+
 @Gtk.Template(resource_path='/xyz/merlinx/Spotipyne/simpleControls.ui')
 class SimpleControls(Gtk.Revealer):
-	__gtype_name__ = 'SimpleControls'
+    __gtype_name__ = 'SimpleControls'
 
-	class PlaybackButton(Gtk.Button):
+    class PlaybackButton(Gtk.Button):
 
-		def __init__(self, spotifyPlayback, **kwargs):
-			super().__init__(**kwargs)
-			spotifyPlayback.connect("is_playing_changed", self.updateLabel)
-			self.connect("clicked", self.on_clicked)
-			self.show()
-			self.__is_playing = False
-			self.playing_image = Gtk.Image.new_from_icon_name("media-playback-pause", Gtk.IconSize.LARGE_TOOLBAR)
-			self.paused_image = Gtk.Image.new_from_icon_name("media-playback-start", Gtk.IconSize.LARGE_TOOLBAR)
-			self.set_image(self.paused_image)
+        def __init__(self, spotifyPlayback, **kwargs):
+            super().__init__(**kwargs)
+            spotifyPlayback.connect("is_playing_changed", self.updateLabel)
+            self.connect("clicked", self.on_clicked)
+            self.show()
+            self.__is_playing = False
+            self.playing_image = Gtk.Image.new_from_icon_name(
+                "media-playback-pause", Gtk.IconSize.LARGE_TOOLBAR)
+            self.paused_image = Gtk.Image.new_from_icon_name(
+                "media-playback-start", Gtk.IconSize.LARGE_TOOLBAR)
+            self.set_image(self.paused_image)
 
-		def updateLabel(self, spotifyPlayback, is_playing):
-			self.__is_playing = is_playing
-			def to_main_thread():
-				if is_playing:
-					self.set_image(self.playing_image)
-				else:
-					self.set_image(self.paused_image)
-			GLib.idle_add(to_main_thread)
+        def updateLabel(self, spotifyPlayback, is_playing):
+            self.__is_playing = is_playing
 
-		def on_clicked(self, _):
-			def to_bg():
-				if self.__is_playing:
-					sp.pause_playback()
-				else:
-					sp.start_playback()
+            def to_main_thread():
+                if is_playing:
+                    self.set_image(self.playing_image)
+                else:
+                    self.set_image(self.paused_image)
+            GLib.idle_add(to_main_thread)
 
-			thread = threading.Thread(daemon=True, target=to_bg)
-			thread.start()
+        def on_clicked(self, _):
+            def to_bg():
+                if self.__is_playing:
+                    sp.pause_playback()
+                else:
+                    sp.start_playback()
 
-	class SaveTrackButton(Gtk.Button):
+            thread = threading.Thread(daemon=True, target=to_bg)
+            thread.start()
 
-		def __init__(self, spotifyPlayback, **kwargs):
-			super().__init__(**kwargs)
-			self.show()
-			self.__is_saved_track = False
-			self.remove_saved_icon_image = Gtk.Image.new_from_icon_name("list-remove-symbolic.symbolic", Gtk.IconSize.LARGE_TOOLBAR)
-			self.add_saved_icon_image = Gtk.Image.new_from_icon_name("list-add-symbolic.symbolic", Gtk.IconSize.LARGE_TOOLBAR)
-			self.set_image(self.add_saved_icon_image)
-			spotifyPlayback.connect("is_saved_track_changed", self.updateIcon)
-			self.connect("clicked", self.on_clicked, spotifyPlayback)
+    class SaveTrackButton(Gtk.Button):
 
-		def updateIcon(self, spotifyPlayback, is_saved_track):
-			self.__is_saved_track = is_saved_track
-			def to_main_thread():
-				if is_saved_track:
-					self.set_image(self.remove_saved_icon_image)
-				else:
-					self.set_image(self.add_saved_icon_image)
-			GLib.idle_add(to_main_thread)
+        def __init__(self, spotifyPlayback, **kwargs):
+            super().__init__(**kwargs)
+            self.show()
+            self.__is_saved_track = False
+            self.remove_saved_icon_image = Gtk.Image.new_from_icon_name(
+                "list-remove-symbolic.symbolic", Gtk.IconSize.LARGE_TOOLBAR)
+            self.add_saved_icon_image = Gtk.Image.new_from_icon_name(
+                "list-add-symbolic.symbolic", Gtk.IconSize.LARGE_TOOLBAR)
+            self.set_image(self.add_saved_icon_image)
+            spotifyPlayback.connect("is_saved_track_changed", self.updateIcon)
+            self.connect("clicked", self.on_clicked, spotifyPlayback)
 
-		def on_clicked(self, _, spotifyPlayback):
-			def to_bg():
-				try:
-					current_track_uri = spotifyPlayback.track_uri
-					saved = self.__is_saved_track
-					if saved:
-						sp.get().current_user_saved_tracks_delete([current_track_uri])
-					else:
-						sp.get().current_user_saved_tracks_add([current_track_uri])
-					spotifyPlayback.emit("is_saved_track_changed", not saved)
-				except SpotifyException as e:
-					print(str(e))
-			thread = threading.Thread(daemon=True, target=to_bg)
-			thread.start()
+        def updateIcon(self, spotifyPlayback, is_saved_track):
+            self.__is_saved_track = is_saved_track
 
-	class SimpleProgressBar(Gtk.ProgressBar):
+            def to_main_thread():
+                if is_saved_track:
+                    self.set_image(self.remove_saved_icon_image)
+                else:
+                    self.set_image(self.add_saved_icon_image)
+            GLib.idle_add(to_main_thread)
 
-		def __init__(self, spotifyPlayback, **kwargs):
-			super().__init__(**kwargs)
-			self.__smooth_time_ms = 150
-			self.__smoothing_speed = 0.0
-			self.pb = spotifyPlayback
-			self.pb.connect("track_changed", self.updateSmoothingSpeed)
-			self.pb.connect("is_playing_changed", self.updateSmoother)
-			self.__smooth_updater = None
+        def on_clicked(self, _, spotifyPlayback):
+            def to_bg():
+                try:
+                    current_track_uri = spotifyPlayback.track_uri
+                    saved = self.__is_saved_track
+                    if saved:
+                        sp.get().current_user_saved_tracks_delete(
+                            [current_track_uri])
+                    else:
+                        sp.get().current_user_saved_tracks_add(
+                            [current_track_uri])
+                    spotifyPlayback.emit("is_saved_track_changed", not saved)
+                except SpotifyException as e:
+                    print(str(e))
+            thread = threading.Thread(daemon=True, target=to_bg)
+            thread.start()
 
-		def updateSmoother(self, spotifyPlayback, is_playing):
-			if is_playing:
-				self.__smooth_updater = GLib.timeout_add(interval=self.__smooth_time_ms, function=self.updateFractionSmoothly)
-			elif self.__smooth_updater is not None:
-				GLib.source_remove(self.__smooth_updater)
+    class SimpleProgressBar(Gtk.ProgressBar):
 
-		def updateSmoothingSpeed(self, spotifyPlayback, track_uri):
-			self.__smoothing_speed = self.__smooth_time_ms / spotifyPlayback.duration_ms
+        def __init__(self, spotifyPlayback, **kwargs):
+            super().__init__(**kwargs)
+            self.__smooth_time_ms = 150
+            self.__smoothing_speed = 0.0
+            self.pb = spotifyPlayback
+            self.pb.connect("track_changed", self.updateSmoothingSpeed)
+            self.pb.connect("is_playing_changed", self.updateSmoother)
+            self.__smooth_updater = None
 
-		def updateFractionSmoothly(self):
-			self.set_fraction(self.get_fraction() + self.__smoothing_speed)
-			return True
+        def updateSmoother(self, spotifyPlayback, is_playing):
+            if is_playing:
+                self.__smooth_updater = GLib.timeout_add(
+                    interval=self.__smooth_time_ms,
+                    function=self.updateFractionSmoothly)
+            elif self.__smooth_updater is not None:
+                GLib.source_remove(self.__smooth_updater)
 
-	progressbar_box = Gtk.Template.Child()
-	mainbox = Gtk.Template.Child()
+        def updateSmoothingSpeed(self, spotifyPlayback, track_uri):
+            self.__smoothing_speed = self.__smooth_time_ms / spotifyPlayback.duration_ms
 
-	def __init__(self, spotifyPlayback, **kwargs):
-		super().__init__(**kwargs)
-		self.progressbar = self.SimpleProgressBar(spotifyPlayback)
-		self.progressbar_box.pack_start(self.progressbar, False, True, 0)
-		self.progressbar_box.reorder_child(self.progressbar, 0)
+        def updateFractionSmoothly(self):
+            self.set_fraction(self.get_fraction() + self.__smoothing_speed)
+            return True
 
-		self.coverArt = Gtk.Image()
-		self.mainbox.pack_start(self.coverArt, False, True, 0)
+    progressbar_box = Gtk.Template.Child()
+    mainbox = Gtk.Template.Child()
 
-		self.songLabel = Gtk.Label()
-		self.songLabel.set_line_wrap(False)
-		self.mainbox.pack_start(self.songLabel, False, True, 0)
+    def __init__(self, spotifyPlayback, **kwargs):
+        super().__init__(**kwargs)
+        self.progressbar = self.SimpleProgressBar(spotifyPlayback)
+        self.progressbar_box.pack_start(self.progressbar, False, True, 0)
+        self.progressbar_box.reorder_child(self.progressbar, 0)
 
-		spotifyPlayback.connect("track_changed", self.on_track_changed)
-		def reveal_child(_, reveal):
-			self.set_reveal_child(reveal)
-		spotifyPlayback.connect("has_playback", reveal_child)
+        self.coverArt = Gtk.Image()
+        self.mainbox.pack_start(self.coverArt, False, True, 0)
 
-		self.devices_menu = Gio.Menu()
-		self.devices_list_menu = Gio.Menu()
-		self.devices_list_menu.append("Device1", None)
-		self.devices_list_menu.append("Device2", None)
-		spotifyPlayback.connect("devices_changed", self.updateDevicesList)
-		self.updateDevicesList(spotifyPlayback)
-		self.devices_menu.append_section("Devices", self.devices_list_menu)
+        self.songLabel = Gtk.Label()
+        self.songLabel.set_line_wrap(False)
+        self.mainbox.pack_start(self.songLabel, False, True, 0)
 
-		devices_button = Gtk.MenuButton()
-		self.devices_popover = Gtk.Popover.new_from_model(devices_button, self.devices_menu)
-		self.devices_popover.set_relative_to(devices_button)
-		devices_button.set_popover(self.devices_popover)
-		devices_button.set_direction(Gtk.ArrowType.UP)
-		devices_button.set_image(Gtk.Image.new_from_icon_name("multimedia-player-symbolic.symbolic", Gtk.IconSize.LARGE_TOOLBAR))
-		heart_button = self.SaveTrackButton(spotifyPlayback)
-		play_button = self.PlaybackButton(spotifyPlayback)
-		self.buttons = Gtk.ButtonBox(Gtk.Orientation.HORIZONTAL)
+        spotifyPlayback.connect("track_changed", self.on_track_changed)
 
-		devices_button.set_relief(Gtk.ReliefStyle.NONE)
-		heart_button.set_relief(Gtk.ReliefStyle.NONE)
-		play_button.set_relief(Gtk.ReliefStyle.NONE)
+        def reveal_child(_, reveal):
+            self.set_reveal_child(reveal)
+        spotifyPlayback.connect("has_playback", reveal_child)
 
-		self.buttons.pack_start(devices_button, False, True, 0)
-		self.buttons.pack_start(heart_button, False, True, 0)
-		self.buttons.pack_start(play_button, False, True, 0)
-		self.buttons.set_homogeneous(True)
-		self.buttons.set_halign(Gtk.Align.CENTER)
-		self.buttons.set_valign(Gtk.Align.CENTER)
-		self.buttons.set_layout(Gtk.ButtonBoxStyle.EXPAND)
-		self.mainbox.pack_end(self.buttons, False, True, 10)
+        self.devices_menu = Gio.Menu()
+        self.devices_list_menu = Gio.Menu()
+        self.devices_list_menu.append("Device1", None)
+        self.devices_list_menu.append("Device2", None)
+        spotifyPlayback.connect("devices_changed", self.updateDevicesList)
+        self.updateDevicesList(spotifyPlayback)
+        self.devices_menu.append_section("Devices", self.devices_list_menu)
 
-		spotifyPlayback.bind_property("progress_fraction", self.progressbar, "fraction")
-		self.show_all()
+        devices_button = Gtk.MenuButton()
+        self.devices_popover = Gtk.Popover.new_from_model(
+            devices_button, self.devices_menu)
+        self.devices_popover.set_relative_to(devices_button)
+        devices_button.set_popover(self.devices_popover)
+        devices_button.set_direction(Gtk.ArrowType.UP)
+        devices_button.set_image(
+            Gtk.Image.new_from_icon_name(
+                "multimedia-player-symbolic.symbolic",
+                Gtk.IconSize.LARGE_TOOLBAR))
+        heart_button = self.SaveTrackButton(spotifyPlayback)
+        play_button = self.PlaybackButton(spotifyPlayback)
+        self.buttons = Gtk.ButtonBox(Gtk.Orientation.HORIZONTAL)
 
-	def updateDevicesList(self, spotifyPlayback):
-		def activate_device(action, value, device_id):
-			sp.get().transfer_playback(device_id, force_play=True)
-		self.devices_list_menu.remove_all()
-		devs = spotifyPlayback.get_devices()
-		self.set_reveal_child(len(devs) != 0)
-		self.action_group = Gio.SimpleActionGroup.new()
-		for dev in devs:
-			dev_name = dev['name']
-			action_name = dev_name
-			device_action = Gio.SimpleAction(name=dev_name)
-			Gio.Application.get_default().add_action(device_action)
-			device_action.connect("activate", activate_device, dev['id'])
-			detailed_action = "app." + dev_name
-			self.devices_list_menu.append(dev_name, detailed_action)
+        devices_button.set_relief(Gtk.ReliefStyle.NONE)
+        heart_button.set_relief(Gtk.ReliefStyle.NONE)
+        play_button.set_relief(Gtk.ReliefStyle.NONE)
 
-	def updateSongLabel(self, spotifyPlayback):
-		label_string = '<b>' + GLib.markup_escape_text(spotifyPlayback.get_track_name()) + '</b>'
-		label_string += '\n'
-		label_string += GLib.markup_escape_text(spotifyPlayback.get_artist_names())
-		self.songLabel.set_markup(label_string)
+        self.buttons.pack_start(devices_button, False, True, 0)
+        self.buttons.pack_start(heart_button, False, True, 0)
+        self.buttons.pack_start(play_button, False, True, 0)
+        self.buttons.set_homogeneous(True)
+        self.buttons.set_halign(Gtk.Align.CENTER)
+        self.buttons.set_valign(Gtk.Align.CENTER)
+        self.buttons.set_layout(Gtk.ButtonBoxStyle.EXPAND)
+        self.mainbox.pack_end(self.buttons, False, True, 10)
 
-	def on_track_changed(self, spotifyPlayback, track_uri):
-		spotifyPlayback.set_current_cover_art(self.coverArt, Dimensions(60,60,True))
-		self.updateSongLabel(spotifyPlayback)
+        spotifyPlayback.bind_property(
+            "progress_fraction", self.progressbar, "fraction")
+        self.show_all()
 
+    def updateDevicesList(self, spotifyPlayback):
+        def activate_device(action, value, device_id):
+            sp.get().transfer_playback(device_id, force_play=True)
+        self.devices_list_menu.remove_all()
+        devs = spotifyPlayback.get_devices()
+        self.set_reveal_child(len(devs) != 0)
+        self.action_group = Gio.SimpleActionGroup.new()
+        for dev in devs:
+            dev_name = dev['name']
+            action_name = dev_name
+            device_action = Gio.SimpleAction(name=dev_name)
+            Gio.Application.get_default().add_action(device_action)
+            device_action.connect("activate", activate_device, dev['id'])
+            detailed_action = "app." + dev_name
+            self.devices_list_menu.append(dev_name, detailed_action)
+
+    def updateSongLabel(self, spotifyPlayback):
+        label_string = '<b>' + GLib.markup_escape_text(
+            spotifyPlayback.get_track_name()) + '</b>'
+        label_string += '\n'
+        label_string += GLib.markup_escape_text(
+            spotifyPlayback.get_artist_names())
+        self.songLabel.set_markup(label_string)
+
+    def on_track_changed(self, spotifyPlayback, track_uri):
+        spotifyPlayback.set_current_cover_art(
+            self.coverArt, Dimensions(60, 60, True))
+        self.updateSongLabel(spotifyPlayback)
