@@ -19,24 +19,21 @@ Not a lot yet. But here's a short list:
 
 - play/pause
 - list devices/select device
-- list playlists
-- list tracks inside a playlist
-- start playing a track inside a playlist
+- list playlists 
+- list tracks inside a playlist / liked tracks 
+- start playing a track inside a playlist (liked tracks can't yet be played, because there is no great native way to do so)
 - show playlist covers
 - show album covers
 - show progress bar
 - search (playlists and tracks only really work yet)
-- save/unsave the current track
+- like/unlike the current track
 
 # How can I use it?
 
 For installation see below.
 
-I have finally implemented a way to login with a user interface.
-For the normal login, just input your username and press submit. This should start your browser, if you haven't authorized the application to access your Spotify account yet.
-You could also try the browser-automation login, which uses selenium to automate the login process inside the browser. However this didn't work on the pinephone for me. Also you have to install some sort of webdriver supported by selenium like the geckodriver for firefox.
-
-You only need to insert the password, if you are using the automated process.
+For the normal login, just input your username and press submit (no password required). This should start your browser, if you haven't authorized the application to access your Spotify account yet in which you will have to log into spotify. If it does not start a browser, try setting the environment variable `BROWSER` before starting spotipyne.
+You could also try the browser-automation login, which uses selenium to automate the login process inside the browser (so it's a hands-free experience). However this didn't work on the pinephone for me. Also you have to install some sort of webdriver supported by selenium like the geckodriver for firefox.
 
 **Note: IF YOU ARE USING THE BROWSER AUTOMATION, IT WILL AUTOMATICALLY AGREE TO AUTHORIZE THIS APP TO HAVE ACCESS TO YOUR LIBRARY AND PLAYBACK! PLEASE BE AWARE OF THAT.**
 
@@ -49,7 +46,7 @@ You only need to insert the password, if you are using the automated process.
 # Dependencies
 
 - gettext
-- libhandy-1
+- libhandy >= 1.0
 - python3
 - PyGObject >= 3.36
 - pyxdg
