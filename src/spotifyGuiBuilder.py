@@ -17,6 +17,7 @@
 
 import threading
 import time
+import random
 
 from functools import reduce
 
@@ -196,17 +197,34 @@ class SpotifyGuiBuilder:
         playlist_id = playlist_uri.split(':')[-1]
         vbox = Gtk.Box(orientation=Gtk.Orientation.VERTICAL)
         playlist_image = self.cover_art_loader.get_loading_image()
-        label = Gtk.Label(xalign=0)
+        label = Gtk.Label(xalign=0.5)
+        play_button = Gtk.Button("play random", halign=Gtk.Align.CENTER)
         playlist_tracks_list = Gtk.ListBox()
         vbox.pack_start(playlist_image, False, True, 0)
         vbox.pack_start(label, False, True, 0)
+        vbox.pack_start(play_button, False, False, 0)
         vbox.pack_start(playlist_tracks_list, False, True, 0)
 
-        def on_playlist_tracks_list_row_activated(listbox, row):
+        def play_random(_button):
+            try:
+                random_row = random.choice(playlist_tracks_list.get_children())
+            except IndexError:
+                return
+            uri = random_row.get_uri()
             def helper():
                 sp.start_playback(
                     context_uri=playlist_uri, offset={
-                        "uri": row.get_uri()})
+                        "uri": uri})
+            threading.Thread(daemon=True, target=helper).start()
+
+        play_button.connect("clicked", play_random)
+
+        def on_playlist_tracks_list_row_activated(listbox, row):
+            uri = row.get_uri()
+            def helper():
+                sp.start_playback(
+                    context_uri=playlist_uri, offset={
+                        "uri": uri})
             sp_thread = threading.Thread(daemon=True, target=helper)
             sp_thread.start()
 
