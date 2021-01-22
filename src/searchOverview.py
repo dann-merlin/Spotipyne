@@ -21,6 +21,7 @@ import threading
 from gi.repository import Gtk, GLib
 
 from .spotify import Spotify as sp
+from .contentDeck import ContentDeck
 
 
 @Gtk.Template(resource_path='/xyz/merlinx/Spotipyne/searchOverview.ui')
@@ -28,7 +29,6 @@ class SearchOverview(Gtk.Box):
     __gtype_name__ = 'SearchOverview'
 
     search_bar_entry = Gtk.Template.Child()
-    search_deck = Gtk.Template.Child()
 
     def __init__(self, gui_builder, back_button, **kwargs):
         super().__init__(**kwargs)
@@ -41,66 +41,28 @@ class SearchOverview(Gtk.Box):
         start_search_label = Gtk.Label(
             "Input a search request and press enter...", xalign=0)
         self.search_results_box.pack_start(start_search_label, False, True, 0)
-        self.search_deck_stack = []
-        self.scrolled_window.add(self.search_results_box)
-        self.search_deck.add(self.scrolled_window)
+        self.search_deck = ContentDeck(default_widget=self.search_results_box)
+        self.pack_start(self.search_deck, True, True, 0)
 
-        def on_deck_transition_running(deck, _):
-            if len(self.search_deck_stack) == 0:
-                return
-            if not deck.get_transition_running():
-                visible_child = deck.get_visible_child()
-                while visible_child != self.search_deck_stack[-1]:
-                    deck.remove(self.search_deck_stack.pop())
-                    if len(self.search_deck_stack) == 0:
-                        return
+        def on_back_button_clicked(button):
+            self.search_deck.pop()
 
         def on_decks_visible_child_changed(deck, _):
-            if self.search_deck.get_visible_child() == self.scrolled_window:
+            if deck.isEmpty():
                 self.back_button.hide()
             else:
                 self.back_button.show()
 
-        self.search_deck.connect(
-            "notify::transition-running",
-            on_deck_transition_running)
+        self.back_button.connect("clicked", on_back_button_clicked)
         self.search_deck.connect(
             "notify::visible-child",
             on_decks_visible_child_changed)
 
-        def on_back_button_clicked(button):
-            self.pop_overlay()
-
-        self.back_button.connect("clicked", on_back_button_clicked)
-
         self.show_all()
-
-    def __set_new_overlay_box(self, new_box):
-        self.scrolled_window.remove(self.search_results_box)
-        self.search_results_box = new_box
-        self.scrolled_window.add(self.search_results_box)
-        self.show_all()
-
-    def pop_overlay(self):
-        if len(self.search_deck_stack) == 1:
-            self.search_deck.set_visible_child(self.scrolled_window)
-        else:
-            self.search_deck.set_visible_child(self.search_deck_stack[-2])
-
-    def push_overlay(self, new_box):
-        scrolled_wrapper = Gtk.ScrolledWindow()
-        scrolled_wrapper.add(new_box)
-        self.search_deck_stack.append(scrolled_wrapper)
-        self.search_deck.add(scrolled_wrapper)
-        scrolled_wrapper.show_all()
-        self.search_deck.set_visible_child(scrolled_wrapper)
 
     def set_search_results(self, widget):
-        for child in self.search_deck.get_children()[1:]:
-            self.search_deck.remove(child)
-        self.scrolled_window.remove(self.scrolled_window.get_child())
-        self.scrolled_window.add(widget)
-        self.search_deck.set_visible_child(self.scrolled_window)
+        self.search_deck.clear()
+        self.search_deck.set_default_widget(widget)
 
     def set_new_search(self, text):
         search_response = sp.get().search(
@@ -108,14 +70,9 @@ class SearchOverview(Gtk.Box):
             type='track,playlist,show,episode,album,artist')
 
         def _set_new_search():
-            new_search_results_box = Gtk.Box(
-                orientation=Gtk.Orientation.VERTICAL
-            )
+            new_search_results_box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL)
             self.gui_builder.build_search_results(
-                new_search_results_box,
-                search_response,
-                self.push_overlay
-            )
+                new_search_results_box, search_response, self.search_deck.push)
             self.remove(self.search_results_box)
             self.set_search_results(new_search_results_box)
         GLib.idle_add(_set_new_search)

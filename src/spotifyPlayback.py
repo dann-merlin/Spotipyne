@@ -1,4 +1,4 @@
-# spotify_playback.py
+# spotifyPlayback.py
 #
 # Copyright 2020 Merlin Danner
 #
