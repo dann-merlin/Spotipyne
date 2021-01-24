@@ -123,7 +123,11 @@ class SpotifyGuiBuilder:
             all_tracks += tracks_response['items']
         return [track_response['track'] for track_response in all_tracks]
 
-    def load_generic_list(self, generic_list, raw_data, build_entry_function):
+    def load_generic_list(self,
+                          generic_list,
+                          raw_data,
+                          build_entry_function,
+                          stop_event):
         def load_chunk(chunk):
             for raw_data_for_entry in chunk:
                 entry = build_entry_function(raw_data_for_entry)
@@ -141,28 +145,39 @@ class SpotifyGuiBuilder:
         for chunk in chunks(raw_data, 10):
             GLib.idle_add(load_chunk, chunk, priority=GLib.PRIORITY_LOW)
             time.sleep(0.5)
+            if stop_event and stop_event.is_set():
+                return
 
-    def load_playlist_tracks_list(self, playlist_tracks_list, playlist_id):
+
+    def load_playlist_tracks_list(self,
+                                  playlist_tracks_list,
+                                  playlist_id,
+                                  stop_event):
         playlist_tracks = self.get_playlist_tracks(playlist_id)
         self.load_generic_list(
             playlist_tracks_list,
             playlist_tracks,
-            self.build_track_entry)
+            self.build_track_entry,
+            stop_event
+        )
 
     def build_artist_page(self, artist_uri):
         vbox = Gtk.Box(orientation=Gtk.Orientation.VERTICAL)
+        vbox.page_stop_event = threading.Event()
         vbox.pack_start(Gtk.Label("Artist " + artist_uri), False, True, 0)
         vbox.show_all()
         return vbox
 
     def build_album_page(self, album_uri):
         vbox = Gtk.Box(orientation=Gtk.Orientation.VERTICAL)
+        vbox.page_stop_event = threading.Event()
         vbox.pack_start(Gtk.Label("Album " + album_uri), False, True, 0)
         vbox.show_all()
         return vbox
 
     def build_saved_tracks_page(self):
         vbox = Gtk.Box(orientation=Gtk.Orientation.VERTICAL)
+        vbox.page_stop_event = threading.Event()
         tracks_list = Gtk.ListBox()
         image = Gtk.Image.new_from_icon_name(
             "emblem-favorite-symbolic.symbolic", Gtk.IconSize.DIALOG)
@@ -185,7 +200,9 @@ class SpotifyGuiBuilder:
             self.load_generic_list(
                 tracks_list,
                 saved_tracks,
-                self.build_track_entry)
+                self.build_track_entry,
+                vbox.page_stop_event
+            )
             pass
 
         threading.Thread(daemon=True, target=load_saved_tracks_list).start()
@@ -196,6 +213,7 @@ class SpotifyGuiBuilder:
     def build_playlist_page(self, playlist_uri):
         playlist_id = playlist_uri.split(':')[-1]
         vbox = Gtk.Box(orientation=Gtk.Orientation.VERTICAL)
+        vbox.page_stop_event = threading.Event()
         playlist_image = self.cover_art_loader.get_loading_image()
         label = Gtk.Label(xalign=0.5)
         play_button = Gtk.Button("play random", halign=Gtk.Align.CENTER)
@@ -262,7 +280,7 @@ class SpotifyGuiBuilder:
             thread_label.start()
             thread_tracks = threading.Thread(
                 daemon=True, target=self.load_playlist_tracks_list, args=(
-                    playlist_tracks_list, playlist_id))
+                    playlist_tracks_list, playlist_id, vbox.page_stop_event))
             thread_tracks.start()
         load_playlist_page()
         vbox.show_all()
@@ -270,6 +288,7 @@ class SpotifyGuiBuilder:
 
     def build_show_page(self, show_uri):
         vbox = Gtk.Box(orientation=Gtk.Orientation.VERTICAL)
+        vbox.page_stop_event = threading.Event()
         vbox.pack_start(Gtk.Label("Show " + show_uri), False, True, 0)
         vbox.show_all()
         return vbox
@@ -376,7 +395,7 @@ class SpotifyGuiBuilder:
                 results_list.connect("row-activated", activation_handler)
                 list_loader_thread = threading.Thread(
                     daemon=True, target=self.load_generic_list, args=(
-                        results_list, response['items'], build_entry_function))
+                        results_list, response['items'], build_entry_function, None))
                 list_loader_thread.start()
                 result_box.pack_start(results_list, False, True, 0)
                 search_result_box.pack_start(result_box, False, True, 0)
@@ -451,12 +470,13 @@ class SpotifyGuiBuilder:
                     widget = self.build_playlist_page(entry.get_uri())
                 set_widget_function(widget)
 
-                # threading.Thread(daemon=True, target=inBackground).start()
-
             listbox.connect("row-activated", on_row_activated)
             GLib.idle_add(load_saved_tracks_entry)
             playlists = self.get_playlists()
-            self.load_generic_list(listbox, playlists, self.build_playlist_entry)
+            self.load_generic_list(listbox,
+                                   playlists,
+                                   self.build_playlist_entry,
+                                   None)
 
         threading.Thread(daemon=True, target=_load_library_helper).start()
 
