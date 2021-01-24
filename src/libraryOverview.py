@@ -44,7 +44,7 @@ class LibraryOverview(Handy.Leaflet):
         # TODO add callback for those playlists to load the PlaylistPage
         def set_widget_function(widget):
             self.secondary_box.remove(self.content_deck)
-            self.contentDeck = ContentDeck(
+            self.content_deck = ContentDeck(
                 Gtk.Label("Select one of the options in the library."))
             self.secondary_box.pack_start(self.content_deck, True, True, 0)
             self.content_deck.push(widget)
@@ -63,7 +63,6 @@ class LibraryOverview(Handy.Leaflet):
         self.show_all()
 
     def __on_folded_change(self, _overview, _folded):
-        print("FOLD!")
         if self.get_folded():
             if self.get_visible_child() == self.primary_box:
                 self.back_button.hide()
