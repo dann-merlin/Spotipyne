@@ -15,6 +15,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+import gc
 from gi.repository import Handy, Gtk
 from .contentDeck import ContentDeck
 
@@ -37,22 +38,27 @@ class LibraryOverview(Handy.Leaflet):
         self.connect("notify::visible-child", self.__on_child_switched)
         self.back_button.connect("clicked", self.__on_back_button_clicked)
 
-        self.content_deck = ContentDeck(
-            Gtk.Label("Select one of the options in the library."))
+        self.default_widget = Gtk.Label("Select one of the playlists...")
+        self.content_deck = ContentDeck(self.default_widget)
 
-        # TODO Build the list of playlists (also add the saved songs and maybe somehow the spotify created playlists
-        # TODO add callback for those playlists to load the PlaylistPage
+        # TODO Build the spotify created playlists
+
         def set_widget_function(widget):
-            self.secondary_box.remove(self.content_deck)
-            self.content_deck = ContentDeck(
-                Gtk.Label("Select one of the options in the library."))
-            self.secondary_box.pack_start(self.content_deck, True, True, 0)
-            self.content_deck.push(widget)
+            for child in self.content_deck.stack:
+                w = child.get_child().get_child()
+                if hasattr(w, "page_stop_event"):
+                    w.page_stop_event.set()
+                else:
+                    # TODO logging warning
+                    pass
+
+            self.content_deck.reset_push(widget)
             self.set_visible_child(self.secondary_box)
 
         def push_widget_function(widget):
             self.content_deck.push(widget)
             self.set_visible_child(self.secondary_box)
+
         self.library = Gtk.ListBox()
         self.gui_builder.load_library(
             self.library,

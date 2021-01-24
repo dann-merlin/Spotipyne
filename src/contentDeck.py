@@ -20,13 +20,16 @@ from gi.repository import Gtk, Handy
 
 class ContentDeck(Handy.Deck):
 
+    transition_duration = 200
+
     def __init__(self, default_widget, **kwargs):
         super().__init__(**kwargs)
+
         self.set_can_swipe_back(True)
         self.set_can_swipe_forward(False)
         self.set_homogeneous(Gtk.Orientation.HORIZONTAL, True)
         self.set_homogeneous(Gtk.Orientation.VERTICAL, True)
-        self.set_transition_duration(200)
+        self.set_transition_duration(self.transition_duration)
         self.set_transition_type(Handy.DeckTransitionType.OVER)
         self.default_widget = Gtk.ScrolledWindow()
         self.default_widget.add(default_widget)
@@ -54,14 +57,18 @@ class ContentDeck(Handy.Deck):
     def pop(self):
         if len(self.stack) == 0:
             self.set_visible_child(self.default_widget)
-            return False
+            return None
         else:
+            last = self.stack[-1]
+            if hasattr(last, "page_stop_event"):
+                print("stop this page")
+                last.page_stop_event.set()
             self.stack = self.stack[:-1]
             if len(self.stack) == 0:
                 self.set_visible_child(self.default_widget)
             else:
                 self.set_visible_child(self.stack[-1])
-            return True
+            return last
 
     def push(self, new_top):
         scrollable_container = Gtk.ScrolledWindow()
@@ -76,7 +83,15 @@ class ContentDeck(Handy.Deck):
         if len(self) > 1:
             for child in self.get_children()[1:]:
                 self.remove(child)
-        self.stack = [self.default_widget]
+        self.stack = []
+
+    def reset_push(self, widget):
+        self.set_transition_duration(0)
+        self.push(widget)
+        for child in self.stack[:-1]:
+            self.remove(child)
+        self.stack = [self.stack[-1]]
+        self.set_transition_duration(self.transition_duration)
 
     def isEmpty(self):
         return len(self.stack) <= 0
