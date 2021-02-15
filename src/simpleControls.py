@@ -200,10 +200,11 @@ class SimpleControls(Gtk.Revealer):
         self.action_group = Gio.SimpleActionGroup.new()
         for dev in devs:
             dev_name = dev['name']
-            device_action = Gio.SimpleAction(name=dev_name)
+            action_name = dev_name.replace(' ', '_')
+            device_action = Gio.SimpleAction(name=action_name)
             Gio.Application.get_default().add_action(device_action)
             device_action.connect("activate", activate_device, dev['id'])
-            detailed_action = "app." + dev_name
+            detailed_action = "app." + action_name
             self.devices_list_menu.append(dev_name, detailed_action)
 
     def updateSongLabel(self, spotify_playback):
