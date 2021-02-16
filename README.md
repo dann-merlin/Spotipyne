@@ -87,3 +87,7 @@ To install run (with sudo):
 ``
 ninja -C build install
 ``
+
+# Contact
+
+If you wan't to contact me, you can do so at spotipyne@posteo.net
