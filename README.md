@@ -1,3 +1,6 @@
+I'm not really working on Spotipyne anymore.
+I would recommend using another client, like [spot](https://github.com/xou816/spot).
+
 # Spotipyne
 Gtk Spotify client written in python made to be compatible with mobile formfactors like a pinephone.
 
